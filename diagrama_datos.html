@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Diagrama de Datos — Proyecto 4</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; padding: 40px 24px; }
+  h1 { text-align: center; font-size: 1.6rem; color: #f8fafc; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 0.82rem; color: #94a3b8; margin-bottom: 36px; }
+
+  .diagram { display: flex; flex-direction: column; gap: 28px; max-width: 1200px; margin: 0 auto; }
+
+  .center-row { display: flex; justify-content: center; }
+  .target-box {
+    background: linear-gradient(135deg, #1e40af, #0369a1);
+    border: 2px solid #38bdf8;
+    border-radius: 16px;
+    padding: 20px 48px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(56,189,248,0.2);
+    max-width: 500px; width: 100%;
+  }
+  .target-box .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: .12em; color: #7dd3fc; margin-bottom: 4px; }
+  .target-box h2 { font-size: 1.2rem; color: #fff; }
+  .target-box p { font-size: 0.78rem; color: #bae6fd; margin-top: 5px; }
+
+  .connector { display: flex; justify-content: center; align-items: center; gap: 14px; color: #475569; font-size: 0.68rem; text-transform: uppercase; letter-spacing: .08em; }
+  .connector hr { flex: 1; border: none; border-top: 1px dashed #334155; }
+
+  /* grid layouts */
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+  .col-header {
+    text-align: center; font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: .1em; padding: 5px 0; border-radius: 8px;
+    margin-bottom: 10px; font-weight: 700;
+  }
+  .col-header.green  { background: #052e16; color: #4ade80; border: 1px solid #166534; }
+  .col-header.blue   { background: #0c1a3a; color: #60a5fa; border: 1px solid #1e40af; }
+  .col-header.amber  { background: #1c1207; color: #fbbf24; border: 1px solid #92400e; }
+  .col-header.purple { background: #1a0533; color: #c084fc; border: 1px solid #6b21a8; }
+  .col-header.red    { background: #2d0707; color: #f87171; border: 1px solid #991b1b; }
+  .col-header.slate  { background: #0f172a; color: #94a3b8; border: 1px solid #334155; }
+
+  .card { border-radius: 10px; padding: 12px; margin-bottom: 10px; border: 1px solid; font-size: 0.78rem; }
+  .card.green  { background: #052e16cc; border-color: #166534; }
+  .card.blue   { background: #0c1a3acc; border-color: #1d4ed8; }
+  .card.amber  { background: #1c1207cc; border-color: #92400e; }
+  .card.purple { background: #1a0533cc; border-color: #6b21a8; }
+  .card.red    { background: #2d0707cc; border-color: #991b1b; }
+  .card.slate  { background: #1e293bcc; border-color: #334155; }
+
+  .card h3 { font-size: 0.82rem; font-weight: 700; margin-bottom: 5px; }
+  .card.green  h3 { color: #4ade80; }
+  .card.blue   h3 { color: #60a5fa; }
+  .card.amber  h3 { color: #fbbf24; }
+  .card.purple h3 { color: #c084fc; }
+  .card.red    h3 { color: #f87171; }
+  .card.slate  h3 { color: #94a3b8; }
+
+  .tag {
+    display: inline-block; font-size: 0.62rem; padding: 1px 7px;
+    border-radius: 999px; margin-bottom: 5px; font-weight: 700; text-transform: uppercase;
+  }
+  .tag-csv    { background: #14532d; color: #86efac; }
+  .tag-nc     { background: #1e3a8a; color: #93c5fd; }
+  .tag-shp    { background: #713f12; color: #fde68a; }
+  .tag-xlsx   { background: #2e1065; color: #d8b4fe; }
+  .tag-low    { background: #1e293b; color: #64748b; }
+  .tag-miss   { background: #450a0a; color: #fca5a5; }
+
+  .pill-list { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
+  .pill { font-size: 0.62rem; padding: 1px 7px; border-radius: 999px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+  .pill.hi { background: #0f2d1a; color: #6ee7b7; border-color: #065f46; }
+
+  .meta { font-size: 0.68rem; color: #64748b; margin-top: 4px; line-height: 1.5; }
+  .meta b { color: #94a3b8; }
+  .meta.warn { color: #f59e0b; }
+
+  .relevance { font-size: 0.62rem; margin-top: 5px; display: flex; align-items: center; gap: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.high   { background: #4ade80; }
+  .dot.med    { background: #fbbf24; }
+  .dot.low    { background: #64748b; }
+
+  .section-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #475569; margin-bottom: 8px; }
+
+  .legend { display: flex; justify-content: center; gap: 18px; margin-top: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.7rem; color: #94a3b8; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>Diagrama de Datos — Proyecto 4</h1>
+<p class="subtitle">Producción agrícola, clima y predicción regional · Estadística Espacial + ML</p>
+
+<div class="diagram">
+
+  <!-- TARGET -->
+  <div class="center-row">
+    <div class="target-box">
+      <div class="label">Variable objetivo (Y)</div>
+      <h2>Rendimiento agrícola municipal</h2>
+      <p>rendimiento (ton/ha) · por municipio · cultivo · año · 2006–2024</p>
+    </div>
+  </div>
+
+  <div class="connector"><hr>Covariables disponibles<hr></div>
+
+  <!-- ROW 1: 4 columns -->
+  <div class="grid-4">
+
+    <!-- AGRICULTURAL -->
+    <div>
+      <div class="col-header green">Producción agrícola</div>
+      <div class="card green">
+        <span class="tag tag-csv">CSV</span>
+        <h3>AGRONET EVA completo</h3>
+        <div class="pill-list">
+          <span class="pill">departamento</span><span class="pill">municipio</span>
+          <span class="pill">producto</span><span class="pill">ciclo</span>
+          <span class="pill">anio</span><span class="pill hi">area_sembrada</span>
+          <span class="pill hi">area_cosechada</span><span class="pill hi">produccion</span>
+          <span class="pill hi">rendimiento ✓</span>
+        </div>
+        <p class="meta"><b>352,341</b> filas · <b>270</b> cultivos · 2006–2024</p>
+        <p class="meta">Cultivos con más datos: Maíz Trad. (26,509), Frijol (20,123), Yuca (17,229), Plátano (13,513), Café (10,972)</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">Relevancia: ALTA — es la fuente principal</span></div>
+      </div>
+      <div class="card green">
+        <span class="tag tag-csv">CSV</span>
+        <h3>Detalle departamental / nacional</h3>
+        <p class="meta">Agregados por departamento y total nacional</p>
+        <div class="relevance"><div class="dot med"></div><span style="color:#fbbf24">Relevancia: MEDIA — útil para contexto</span></div>
+      </div>
+    </div>
+
+    <!-- CLIMATE -->
+    <div>
+      <div class="col-header blue">Clima · NetCDF · 0.1° · 1981–2023</div>
+
+      <div class="card blue">
+        <span class="tag tag-nc">NC · día + mes</span>
+        <h3>Precipitación</h3>
+        <div class="pill-list">
+          <span class="pill hi">prcp_dia/ 15,705 archivos</span>
+          <span class="pill hi">prcp_mes_acum/ 516 archivos</span>
+        </div>
+        <p class="meta">Variable: <b>precip / prcp</b> (mm)</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — driver principal de rendimiento</span></div>
+      </div>
+
+      <div class="card blue">
+        <span class="tag tag-nc">NC · día + mes</span>
+        <h3>Temperatura media</h3>
+        <div class="pill-list">
+          <span class="pill hi">tmed_dia/ 15,705 archivos</span>
+          <span class="pill hi">tmed_mes_prom/ 516 archivos</span>
+        </div>
+        <p class="meta">Variable: <b>temp / tmpr</b> (°C)</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — crítica para fenología de cultivos</span></div>
+      </div>
+
+      <div class="card blue">
+        <span class="tag tag-nc">NC · día + mes</span>
+        <h3>Humedad relativa</h3>
+        <div class="pill-list">
+          <span class="pill">humd_dia/ 15,706 archivos</span>
+          <span class="pill">humd_mes_prom/ 516 archivos</span>
+        </div>
+        <p class="meta">Variable: <b>rh / humd</b> (%)</p>
+        <div class="relevance"><div class="dot med"></div><span style="color:#fbbf24">MEDIA — relevante para enfermedades</span></div>
+      </div>
+
+      <div class="card blue">
+        <span class="tag tag-nc">NC · mes + año</span>
+        <h3>Días de lluvia</h3>
+        <div class="pill-list">
+          <span class="pill">ndpr_mes/ 516 archivos</span>
+          <span class="pill">ndpr_anio/ 43 archivos</span>
+        </div>
+        <p class="meta">Variable: <b>ndpr</b> — # días húmedos. Rango: 2–350 días/año</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — distribución temporal de lluvia</span></div>
+      </div>
+
+      <div class="card blue">
+        <span class="tag tag-nc">NC · mes</span>
+        <h3>Evapotranspiración</h3>
+        <div class="pill-list">
+          <span class="pill">evap_mes_acum/ 516 archivos</span>
+        </div>
+        <p class="meta">Variable: <b>evp</b> (mm) · balance hídrico</p>
+        <p class="meta warn">⚠ evap_dia/ contiene precipitación, no evaporación</p>
+        <div class="relevance"><div class="dot med"></div><span style="color:#fbbf24">MEDIA — útil para balance hídrico</span></div>
+      </div>
+    </div>
+
+    <!-- SPATIAL -->
+    <div>
+      <div class="col-header amber">Geodatos espaciales</div>
+
+      <div class="card amber">
+        <span class="tag tag-shp">SHP · WGS84 · 1,118 municipios</span>
+        <h3>Polígonos municipales</h3>
+        <div class="pill-list">
+          <span class="pill hi">DPTO_CCDGO</span><span class="pill hi">MPIO_CCDGO</span>
+          <span class="pill hi">MPIO_CNMBR</span><span class="pill hi">DEPTO</span>
+          <span class="pill">P_ENERSI/NO</span><span class="pill">P_ALCANSI/NO</span>
+          <span class="pill">P_ACUESI/NO</span><span class="pill">P_GASNSI/NO</span>
+          <span class="pill">P_TELEFSI/NO</span>
+        </div>
+        <p class="meta">Clave join con EVA. Incluye coberturas de servicios públicos (Censo 2018)</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — puente entre rasters y tabla EVA</span></div>
+      </div>
+
+      <div class="card amber">
+        <span class="tag tag-shp">SHP · concesiones viales</span>
+        <h3>Red Vial 4G/3G</h3>
+        <div class="pill-list">
+          <span class="pill">Carreteras (45)</span><span class="pill">Peajes (101)</span>
+          <span class="pill">Puentes</span><span class="pill">Túneles</span>
+          <span class="pill">Aeropuertos (17)</span><span class="pill">Puertos (60)</span>
+        </div>
+        <p class="meta">Solo carreteras concesionadas, no red completa</p>
+        <p class="meta"><b>Uso:</b> distancia de cada municipio a la autopista 4G/3G más cercana → proxy de acceso a mercado</p>
+        <div class="relevance"><div class="dot med"></div><span style="color:#fbbf24">MEDIA — proxy de acceso, calcular con spatial join</span></div>
+      </div>
+
+      <div class="card amber">
+        <span class="tag tag-shp">API · srtm.py · por municipio</span>
+        <h3>Altitud (DEM)</h3>
+        <div class="pill-list">
+          <span class="pill hi">altitud_m (centroide)</span>
+        </div>
+        <p class="meta">Consulta SRTM vía API para los 1,118 centroides municipales del shapefile</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — determina temperatura base y cultivo posible</span></div>
+      </div>
+
+      <div class="card amber">
+        <span class="tag tag-csv">CSV · 1950–2026</span>
+        <h3>Índice ENSO (Niño 3.4)</h3>
+        <div class="pill-list">
+          <span class="pill hi">DJF</span><span class="pill hi">JFM</span><span class="pill hi">FMA</span>
+          <span class="pill hi">MAM</span><span class="pill">AMJ</span><span class="pill">MJJ</span>
+          <span class="pill">JJA</span><span class="pill">JAS</span><span class="pill">ASO</span>
+          <span class="pill hi">SON</span><span class="pill hi">OND</span><span class="pill hi">NDJ</span>
+        </div>
+        <p class="meta"><b>enso_nino34.csv</b> · 77 años · 12 ventanas trimestrales</p>
+        <p class="meta">Usar DJF o SON como covariate anual; o promedio anual del índice</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — explica variabilidad interanual de lluvia en Colombia</span></div>
+      </div>
+    </div>
+
+    <!-- SOCIOECONOMIC -->
+    <div>
+      <div class="col-header purple">Socioeconómico · TerriData + NBI</div>
+
+      <div class="card purple">
+        <span class="tag tag-xlsx">XLSX · municipal · 2018</span>
+        <h3>NBI — CNPV 2018</h3>
+        <div class="pill-list">
+          <span class="pill hi">Prop. personas en NBI (%)</span>
+          <span class="pill hi">Prop. en miseria (%)</span>
+          <span class="pill">Comp. vivienda</span>
+          <span class="pill">Comp. servicios</span>
+          <span class="pill">Comp. hacinamiento</span>
+          <span class="pill">Comp. inasistencia</span>
+          <span class="pill">Comp. dependencia económica</span>
+        </div>
+        <p class="meta"><b>1,125</b> municipios. Desagregado: total, cabecera, rural disperso</p>
+        <p class="meta warn">⚠ Solo snapshot 2018, sin serie histórica</p>
+        <div class="relevance"><div class="dot med"></div><span style="color:#fbbf24">MEDIA — contexto socioeconómico municipal</span></div>
+      </div>
+
+      <div class="card purple">
+        <span class="tag tag-xlsx">XLSX · Dim12 · 337 indicadores · municipal</span>
+        <h3>TerriData — Economía</h3>
+        <div class="pill-list">
+          <span class="pill hi">Agricultura/PIB municipal</span>
+          <span class="pill hi">UPAs con acceso a crédito</span>
+          <span class="pill hi">UPAs con maquinaria</span>
+          <span class="pill hi">UPAs con riego</span>
+          <span class="pill hi">Principales cultivos transitorios</span>
+          <span class="pill hi">Principales cultivos permanentes</span>
+          <span class="pill">Valor agregado base 2015</span>
+        </div>
+        <p class="meta"><b>1,048,574</b> filas. UPAs = Unidades de Producción Agropecuaria</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — acceso a factores productivos + participación agrícola en PIB</span></div>
+      </div>
+
+      <div class="card purple">
+        <span class="tag tag-xlsx">XLSX · Dim15 · 47 indicadores · municipal</span>
+        <h3>TerriData — Ordenamiento Territorial</h3>
+        <div class="pill-list">
+          <span class="pill hi">Uso adecuado (ha)</span>
+          <span class="pill hi">Conflicto sobreutilización</span>
+          <span class="pill hi">Conflicto subutilización</span>
+          <span class="pill">% área en conflicto</span>
+          <span class="pill">Catastro</span>
+          <span class="pill">OSPR</span>
+          <span class="pill">Recaudo predial</span>
+        </div>
+        <p class="meta"><b>238,004</b> filas. Sobreutilización = suelo cultivado más allá de su capacidad</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — conflicto de uso suelo afecta directamente rendimiento</span></div>
+      </div>
+
+      <div class="card purple">
+        <span class="tag tag-xlsx">XLSX · Dim11 · 86 indicadores · municipal</span>
+        <h3>TerriData — Ambiente</h3>
+        <div class="pill-list">
+          <span class="pill hi">Deforestación</span>
+          <span class="pill hi">Amenaza hidrometeorológica</span>
+          <span class="pill hi">% área amenazada</span>
+          <span class="pill">Ecosistemas estratégicos</span>
+          <span class="pill">Área SINAP</span>
+          <span class="pill">PSA</span>
+        </div>
+        <p class="meta"><b>286,944</b> filas. Incluye eventos de desastres por municipio</p>
+        <div class="relevance"><div class="dot high"></div><span style="color:#4ade80">ALTA — riesgo climático y deforestación afectan directamente rendimiento</span></div>
+      </div>
+
+      <div class="card slate">
+        <span class="tag tag-low">Baja relevancia</span>
+        <h3>TerriData — Dim3, Dim7, Dim13, Dim29</h3>
+        <p class="meta">Vivienda/servicios (overlap con shapefile), Finanzas públicas, Presupuesto nación, Ciencia y Tecnología</p>
+        <div class="relevance"><div class="dot low"></div><span style="color:#64748b">BAJA — no se relacionan directamente con rendimiento agrícola</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- JOIN KEY -->
+  <div class="connector"><hr>Clave de integración<hr></div>
+  <div style="max-width:700px; margin:0 auto;">
+    <div class="card amber" style="text-align:center;">
+      <h3 style="color:#fbbf24; margin-bottom:8px;">¿Cómo se unen todos los datos?</h3>
+      <div class="pill-list" style="justify-content:center;">
+        <span class="pill hi">EVA → municipio + año</span>
+        <span class="pill" style="color:#94a3b8">→</span>
+        <span class="pill hi">Shapefile → MPIO_CNMBR / MPIO_CCDGO</span>
+        <span class="pill" style="color:#94a3b8">→</span>
+        <span class="pill hi">Rasters → zonal stats por polígono</span>
+        <span class="pill" style="color:#94a3b8">→</span>
+        <span class="pill hi">TerriData/NBI → Código Entidad (DIVIPOLA)</span>
+      </div>
+      <p class="meta" style="margin-top:8px; text-align:center;">Tabla final: 1 fila = 1 municipio × 1 cultivo × 1 año · con todas las covariables climáticas y socioeconómicas unidas</p>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#4ade80"></div>Agrícola (tabular)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>Clima (raster)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#fbbf24"></div>Geodatos espaciales</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#c084fc"></div>Socioeconómico (xlsx)</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#f87171"></div>Baja relevancia</div>
+    <div class="legend-item"><div class="dot high" style="display:inline-block"></div><span>● Alta relevancia</span></div>
+    <div class="legend-item"><div class="dot med" style="display:inline-block"></div><span>● Media relevancia</span></div>
+    <div class="legend-item"><div class="dot low" style="display:inline-block"></div><span>● Baja relevancia</span></div>
+  </div>
+
+</div>
+</body>
+</html>

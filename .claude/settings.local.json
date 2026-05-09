@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import requests, pandas; print\\('deps ok'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(python scraper_codes_probe.py)",
+      "Bash(python *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "PowerShell(Get-Item *)",
+      "Bash(tar -xf design_bundle.tar -C design_files)",
+      "Bash(pip install *)",
+      "Bash(where python *)",
+      "Bash(py -3.13 -c \"import pandas; print\\(pandas.__version__\\)\")",
+      "Bash(streamlit run *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8765)",
+      "Bash(pkill -f \"streamlit run\")",
+      "PowerShell(Get-NetTCPConnection *)",
+      "Bash(rm \"C:\\\\Users\\\\danie\\\\Documents\\\\STDG\\\\proyecto\\\\data\\\\_terridata_features_cache.parquet\")",
+      "Bash(timeout 600 python -c ' *)",
+      "Bash(MODE=terridata timeout 600 python app/_smoke.py)"
+    ]
+  }
+}

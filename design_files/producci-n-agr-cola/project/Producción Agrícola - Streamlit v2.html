@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producción Agrícola de Maíz — Colombia</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'IBM Plex Sans', sans-serif;
+    background: oklch(14% 0.03 145); color: oklch(92% 0.02 145); font-size: 14px; }
+  #root { height: 100%; display: flex; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: oklch(18% 0.03 145); }
+  ::-webkit-scrollbar-thumb { background: oklch(30% 0.05 145); border-radius: 3px; }
+  input[type=range] { accent-color: oklch(52% 0.18 148); }
+  select { cursor: pointer; }
+  button { font-family: inherit; }
+  * { transition: background-color 0.12s, border-color 0.12s; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="charts.jsx"></script>
+<script type="text/babel" src="pages.jsx"></script>
+
+<script type="text/babel">
+// ─── SIDEBAR COMPONENTS ──────────────────────────────────────────────────────
+const NAV_ITEMS = [
+  { id:'eda',    icon:'◈', label:'EDA Espacial',       sub:'Mapas · históricos · ranking' },
+  { id:'moran',  icon:'⬡', label:'Autocorrelación',    sub:'Moran · LISA · clusters' },
+  { id:'ml',     icon:'◆', label:'Modelos ML',          sub:'RF · XGBoost · Lasso · GWR' },
+  { id:'kriging',icon:'◉', label:'Kriging de Residuos', sub:'Variograma · mapa residuos' },
+  { id:'comp',   icon:'▦', label:'Comparación',         sub:'Tabla RMSE/MAE · scatter' },
+];
+
+function SelectCtrl({ label, value, onChange, options }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      <label style={{ display:'block', fontSize:10, color:'oklch(50% 0.04 145)',
+        marginBottom:4, textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</label>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        style={{ width:'100%', background:'oklch(22% 0.03 145)', color:'oklch(85% 0.02 145)',
+          border:'1px solid oklch(30% 0.04 145)', borderRadius:6, padding:'6px 8px',
+          fontSize:12, fontFamily:'IBM Plex Sans, sans-serif', outline:'none' }}>
+        {options.map(o => <option key={o.value??o} value={o.value??o}>{o.label??o}</option>)}
+      </select>
+    </div>
+  );
+}
+
+function SliderCtrl({ label, value, onChange, min, max, step=1, unit='' }) {
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+        <label style={{ fontSize:10, color:'oklch(50% 0.04 145)',
+          textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</label>
+        <span style={{ fontSize:11, fontFamily:'monospace',
+          color:'oklch(72% 0.16 145)' }}>{value}{unit}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => onChange(+e.target.value)} style={{ width:'100%' }}/>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage]             = React.useState('eda');
+  const [year, setYear]             = React.useState(2023);
+  const [region, setRegion]         = React.useState('Todas');
+  const [model, setModel]           = React.useState('Random Forest');
+  const [nTrees, setNTrees]         = React.useState(100);
+  const [maxDepth, setMaxDepth]     = React.useState(6);
+  const [alpha, setAlpha]           = React.useState(0.1);
+  const [collapsed, setCollapsed]   = React.useState(false);
+  const [selectedId, setSelectedId] = React.useState(null);
+
+  const pageLabel = NAV_ITEMS.find(n => n.id === page)?.label ?? '';
+
+  return (
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
+
+      {/* ── SIDEBAR ── */}
+      <aside style={{
+        width: collapsed ? 54 : 262,
+        background: 'oklch(17% 0.03 145)',
+        borderRight: '1px solid oklch(25% 0.04 145)',
+        display: 'flex', flexDirection: 'column',
+        transition: 'width 0.22s ease',
+        flexShrink: 0, overflow: 'hidden',
+      }}>
+
+        {/* Logo */}
+        <div style={{ padding:'16px 14px 14px', borderBottom:'1px solid oklch(25% 0.04 145)',
+          display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:30, height:30, borderRadius:8, flexShrink:0,
+            background:'oklch(52% 0.18 148)', display:'flex', alignItems:'center',
+            justifyContent:'center', fontSize:16 }}>🌽</div>
+          {!collapsed && (
+            <div style={{ overflow:'hidden' }}>
+              <div style={{ fontSize:12, fontWeight:700, color:'oklch(72% 0.16 145)',
+                whiteSpace:'nowrap', lineHeight:1.3 }}>Producción Agrícola</div>
+              <div style={{ fontSize:10, color:'oklch(50% 0.04 145)',
+                whiteSpace:'nowrap', fontFamily:'monospace' }}>Maíz · Colombia · 2018–2023</div>
+            </div>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav style={{ padding:'10px 8px', flex: collapsed ? 1 : 0 }}>
+          {!collapsed && (
+            <div style={{ fontSize:9, color:'oklch(38% 0.04 145)', padding:'4px 6px 8px',
+              textTransform:'uppercase', letterSpacing:'0.10em' }}>Secciones</div>
+          )}
+          {NAV_ITEMS.map(n => {
+            const active = page === n.id;
+            return (
+              <button key={n.id} onClick={() => setPage(n.id)}
+                title={collapsed ? n.label : ''}
+                style={{
+                  width:'100%', textAlign:'left',
+                  background: active ? 'oklch(38% 0.14 148 / 0.22)' : 'transparent',
+                  border: 'none',
+                  borderLeft: active ? '3px solid oklch(52% 0.18 148)' : '3px solid transparent',
+                  borderRadius: active ? '0 7px 7px 0' : 7,
+                  padding: collapsed ? '11px 13px' : '9px 10px',
+                  cursor:'pointer', marginBottom:3,
+                  display:'flex', alignItems:'center', gap:10,
+                }}>
+                <span style={{ fontSize:15, flexShrink:0,
+                  color: active ? 'oklch(72% 0.16 145)' : 'oklch(45% 0.06 145)' }}>
+                  {n.icon}
+                </span>
+                {!collapsed && (
+                  <div>
+                    <div style={{ fontSize:12, fontWeight: active ? 600 : 400,
+                      color: active ? 'oklch(90% 0.02 145)' : 'oklch(60% 0.04 145)',
+                      lineHeight: 1.3 }}>{n.label}</div>
+                    <div style={{ fontSize:10, color:'oklch(42% 0.04 145)' }}>{n.sub}</div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Filters */}
+        {!collapsed && (
+          <div style={{ padding:'12px 14px', borderTop:'1px solid oklch(25% 0.04 145)',
+            borderBottom:'1px solid oklch(25% 0.04 145)', flex:1, overflowY:'auto' }}>
+            <div style={{ fontSize:9, color:'oklch(38% 0.04 145)', marginBottom:10,
+              textTransform:'uppercase', letterSpacing:'0.10em' }}>Filtros</div>
+
+            <SelectCtrl label="Año" value={year} onChange={v => setYear(+v)}
+              options={YEARS.map(y => ({ value:y, label:String(y) }))}/>
+            <SelectCtrl label="Región" value={region} onChange={setRegion}
+              options={['Todas',...REGIONES].map(r => ({ value:r, label:r }))}/>
+
+            {page === 'ml' && (
+              <>
+                <SelectCtrl label="Modelo" value={model} onChange={setModel}
+                  options={['Random Forest','XGBoost','Lasso/Ridge','GWR']
+                    .map(m => ({ value:m, label:m }))}/>
+                {model === 'Random Forest' && <>
+                  <SliderCtrl label="N° árboles" value={nTrees} onChange={setNTrees}
+                    min={10} max={500} step={10}/>
+                  <SliderCtrl label="Max depth" value={maxDepth} onChange={setMaxDepth}
+                    min={2} max={20}/>
+                </>}
+                {model === 'Lasso/Ridge' && (
+                  <SliderCtrl label="Alpha (λ)" value={alpha} onChange={setAlpha}
+                    min={0.01} max={1} step={0.01}/>
+                )}
+              </>
+            )}
+
+            {/* Selected municipality info */}
+            {selectedId != null && (
+              <div style={{ marginTop:12, background:'oklch(22% 0.03 145)',
+                borderRadius:8, padding:'8px 10px', border:'1px solid oklch(52% 0.18 148 / 0.3)' }}>
+                <div style={{ fontSize:9, color:'oklch(52% 0.18 148)', textTransform:'uppercase',
+                  letterSpacing:'0.08em', marginBottom:4 }}>Municipio seleccionado</div>
+                <div style={{ fontSize:11, fontWeight:600, color:'oklch(85% 0.02 145)' }}>
+                  {ALL_DATA.find(d=>d.id===selectedId)?.nombre}
+                </div>
+                <div style={{ fontSize:10, color:'oklch(50% 0.04 145)', marginTop:2 }}>
+                  {ALL_DATA.find(d=>d.id===selectedId)?.region}
+                </div>
+                <button onClick={() => setSelectedId(null)}
+                  style={{ marginTop:6, fontSize:10, color:'oklch(52% 0.18 148)',
+                    background:'none', border:'none', cursor:'pointer', padding:0 }}>
+                  ✕ Deseleccionar
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collapse toggle */}
+        <button onClick={() => setCollapsed(!collapsed)}
+          style={{ padding:'10px 14px', background:'oklch(20% 0.03 145)', border:'none',
+            borderTop:'1px solid oklch(25% 0.04 145)', cursor:'pointer',
+            color:'oklch(45% 0.04 145)', fontSize:13, display:'flex', alignItems:'center',
+            justifyContent: collapsed ? 'center' : 'flex-end', gap:6 }}>
+          {collapsed ? '›' : '‹'}
+          {!collapsed && <span style={{ fontSize:10, textTransform:'uppercase',
+            letterSpacing:'0.06em' }}>Colapsar</span>}
+        </button>
+      </aside>
+
+      {/* ── MAIN ── */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
+
+        {/* Top bar */}
+        <header style={{ background:'oklch(17% 0.03 145)',
+          borderBottom:'1px solid oklch(25% 0.04 145)',
+          padding:'9px 24px', display:'flex', alignItems:'center',
+          justifyContent:'space-between', flexShrink:0 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <span style={{ fontSize:13, fontWeight:600,
+              color:'oklch(78% 0.04 145)' }}>{pageLabel}</span>
+            <span style={{ fontSize:12, color:'oklch(35% 0.04 145)' }}>·</span>
+            <span style={{ fontSize:11, color:'oklch(50% 0.04 145)' }}>Maíz</span>
+            <span style={{ background:'oklch(52% 0.18 148 / 0.18)',
+              color:'oklch(72% 0.16 145)', border:'1px solid oklch(52% 0.18 148 / 0.35)',
+              borderRadius:4, padding:'1px 8px', fontSize:11, fontFamily:'monospace' }}>
+              {year}
+            </span>
+            {region !== 'Todas' && (
+              <span style={{ background:'oklch(68% 0.16 72 / 0.18)',
+                color:'oklch(78% 0.12 80)', border:'1px solid oklch(68% 0.16 72 / 0.35)',
+                borderRadius:4, padding:'1px 8px', fontSize:11 }}>
+                {region}
+              </span>
+            )}
+          </div>
+          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+            <span style={{ fontFamily:'monospace', fontSize:11,
+              color:'oklch(40% 0.04 145)' }}>
+              Estadística Espacial + ML · Proyecto 04
+            </span>
+            <div style={{ width:7, height:7, borderRadius:'50%',
+              background:'#4ade80', boxShadow:'0 0 6px #4ade8088' }}></div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main style={{ flex:1, overflowY:'auto', padding:22 }}>
+          {page==='eda'    && <PageEDA year={year} region={region}
+            selectedId={selectedId} setSelectedId={setSelectedId}/>}
+          {page==='moran'  && <PageMoran year={year}
+            selectedId={selectedId} setSelectedId={setSelectedId}/>}
+          {page==='ml'     && <PageML year={year} model={model} setModel={setModel}
+            nTrees={nTrees} setNTrees={setNTrees} maxDepth={maxDepth} setMaxDepth={setMaxDepth}
+            alpha={alpha} setAlpha={setAlpha}/>}
+          {page==='kriging'&& <PageKriging year={year}
+            selectedId={selectedId} setSelectedId={setSelectedId}/>}
+          {page==='comp'   && <PageComparacion year={year}/>}
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
