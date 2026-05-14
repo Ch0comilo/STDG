@@ -167,7 +167,7 @@ with st.sidebar:
                     f"text-transform:uppercase; letter-spacing:0.10em; margin-bottom:8px;'>"
                     f"Hiper-parámetros</div></div>", unsafe_allow_html=True)
         st.session_state["model"] = st.selectbox(
-            "Modelo", ["Random Forest", "XGBoost", "Lasso/Ridge", "GWR"], key="model_sel"
+            "Modelo", ["Random Forest", "XGBoost", "Lasso/Ridge", "KNN espacial"], key="model_sel"
         )
         if st.session_state["model"] == "Random Forest":
             st.session_state["n_trees"] = st.slider("N° árboles", 10, 500, 200, 10)
