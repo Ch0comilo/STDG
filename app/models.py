@@ -83,7 +83,7 @@ def _build(model_name: str, n_trees: int = 200, max_depth: int = 8, alpha: float
     if model_name == "Lasso/Ridge":
         return Pipeline([("sc", StandardScaler()),
                          ("reg", Ridge(alpha=alpha, random_state=42))])
-    if model_name == "GWR":
+    if model_name in ["GWR", "KNN espacial"]:
         # Lightweight surrogate: KNN-weighted local regression — treated as a "geographically-weighted" baseline.
         from sklearn.neighbors import KNeighborsRegressor
         return KNeighborsRegressor(n_neighbors=10, weights="distance")
@@ -217,7 +217,7 @@ def train_model(df: pd.DataFrame, year: int, model_name: str,
 @st.cache_data(show_spinner="Entrenando todos los modelos…")
 def train_all(df: pd.DataFrame, year: int) -> dict[str, TrainResult]:
     out = {}
-    for name in ["Random Forest", "XGBoost", "Lasso/Ridge", "GWR"]:
+    for name in ["Random Forest", "XGBoost", "Lasso/Ridge", "KNN espacial"]:
         try:
             out[name] = train_model(df, year, name)
         except Exception as e:
