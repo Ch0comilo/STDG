@@ -10,12 +10,12 @@ import streamlit as st
 
 from theme import inject_css, topbar, PALETTE
 from data_loader import build_master, REGIONES, years_available
-from pages_modules.landing import render as render_landing
-from pages_modules.panorama import render as render_panorama
-from pages_modules.clima import render as render_clima
-from pages_modules.territorio import render as render_territorio
-from pages_modules.modelo import render as render_modelo
-from pages_modules.tecnico import render as render_tecnico
+from pages_modules.eda import render as render_eda
+from pages_modules.moran import render as render_moran
+from pages_modules.ml import render as render_ml
+from pages_modules.kriging import render as render_kriging
+from pages_modules.comparacion import render as render_comp
+from pages_modules.acciones import render as render_acciones
 
 
 st.set_page_config(
@@ -95,25 +95,18 @@ components.html("""
 """, height=0)
 
 # ── Load data once ────────────────────────────────────────────────────────────
-df = build_master()
-
-# If expected columns are missing (stale cache from a previous schema),
-# clear all caches and rerun once so build_master executes fresh.
-required_cols = {"prcp_anual", "cob_energia_rural", "uso_adecuado_pct"}
-if not required_cols.issubset(df.columns) and not st.session_state.get("_cache_cleared"):
-    st.session_state["_cache_cleared"] = True
-    st.cache_data.clear()
-    st.rerun()
+include_terridata = st.session_state.get("include_terridata", False)
+df = build_master(include_terridata=include_terridata)
 YEARS = years_available(df)
 
 
 NAV = [
-    ("landing",   "★ Maíz Inteligente",  "Presentación · propuesta de valor",          render_landing),
-    ("panorama",  "◈ Panorama",           "Mapa kriging · KPIs · pies regionales",     render_panorama),
-    ("clima",     "🌡 Clima",              "Precipitación · temperatura · ENSO",         render_clima),
-    ("territorio","⬢ Territorio",          "TerriData · infraestructura · uso suelo",    render_territorio),
-    ("modelo",    "◆ Modelo Lineal",      "OLS+Ridge · supuestos · VIF · diagnóstico",  render_modelo),
-    ("tecnico",   "⬡ Detalle Técnico",    "Moran · LISA · variograma · kriging",        render_tecnico),
+    ("eda",    "◈ EDA Espacial",       "Mapas · históricos · ranking",      render_eda),
+    ("moran",  "⬡ Autocorrelación",    "Moran · LISA · clusters",            render_moran),
+    ("ml",     "◆ Modelos ML",          "RF · XGBoost · Lasso · GWR",         render_ml),
+    ("kriging","◉ Kriging Residuos",    "Variograma · mapa residuos",         render_kriging),
+    ("comp",   "▦ Comparación",         "Tabla RMSE/MAE · scatter",           render_comp),
+    ("acciones","⚡ Acciones",           "Insights · oportunidades",           render_acciones),
 ]
 
 
@@ -157,26 +150,40 @@ with st.sidebar:
     year = st.selectbox("Año", YEARS, index=len(YEARS) - 1)
     region = st.selectbox("Región", ["Todas"] + REGIONES, index=0)
 
-    # Sidebar info — the single model lives here
-    if page_id == "modelo":
+    new_terridata = st.checkbox(
+        "Incluir indicadores TerriData",
+        value=include_terridata,
+        help="Suma covariables socio-económicas por municipio (cobertura energía, "
+             "recaudo predial). Primer carga puede tardar 2-4 min, luego cachea.",
+        key="include_terridata_widget",
+    )
+    if new_terridata != include_terridata:
+        st.session_state["include_terridata"] = new_terridata
+        st.rerun()
+
+    # Page-specific controls slot — pages can read these via session_state
+    if page_id == "ml":
         st.markdown(f"<div style='border-top:1px solid {PALETTE['border_2']}; "
                     f"margin-top:14px; padding-top:14px;'>"
-                    f"<div style='font-size:10px; color:{PALETTE['text_dim']}; "
-                    f"text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;'>"
-                    f"Modelo</div>"
-                    f"<div style='font-size:12px; color:{PALETTE['text']};'>"
-                    f"Regresión lineal · OLS + Ridge<br>"
-                    f"<span style='color:{PALETTE['text_dimmer']}; font-size:11px;'>"
-                    f"α tunado via CV 5-fold</span></div></div>",
-                    unsafe_allow_html=True)
+                    f"<div style='font-size:9px; color:{PALETTE['text_dimmer']}; "
+                    f"text-transform:uppercase; letter-spacing:0.10em; margin-bottom:8px;'>"
+                    f"Hiper-parámetros</div></div>", unsafe_allow_html=True)
+        st.session_state["model"] = st.selectbox(
+            "Modelo", ["Random Forest", "XGBoost", "Lasso/Ridge", "GWR"], key="model_sel"
+        )
+        if st.session_state["model"] == "Random Forest":
+            st.session_state["n_trees"] = st.slider("N° árboles", 10, 500, 200, 10)
+            st.session_state["max_depth"] = st.slider("Max depth", 2, 20, 8)
+        elif st.session_state["model"] == "XGBoost":
+            st.session_state["n_trees"] = st.slider("N° árboles", 10, 500, 200, 10)
+            st.session_state["max_depth"] = st.slider("Max depth", 2, 12, 5)
+        elif st.session_state["model"] == "Lasso/Ridge":
+            st.session_state["alpha"] = st.slider("Alpha (λ)", 0.001, 1.0, 0.1, 0.001)
 
 
 # ── Top bar + Page content ────────────────────────────────────────────────────
-renderer = next(n[3] for n in NAV if n[0] == page_id)
+page_label = next(n[1] for n in NAV if n[0] == page_id).split(" ", 1)[1]
+topbar(page_label, year, region)
 
-if page_id == "landing":
-    renderer()
-else:
-    page_label = next(n[1] for n in NAV if n[0] == page_id).split(" ", 1)[1]
-    topbar(page_label, year, region)
-    renderer(df=df, year=year, region=region)
+renderer = next(n[3] for n in NAV if n[0] == page_id)
+renderer(df=df, year=year, region=region)

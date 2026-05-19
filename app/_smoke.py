@@ -17,7 +17,7 @@ print("  exceptions:", len(at.exception))
 for e in at.exception:
     print("    -", e.value)
 
-for page_id in ["panorama", "clima", "territorio", "modelo", "tecnico"]:
+for page_id in ["eda", "moran", "ml", "kriging", "comp"]:
     at.session_state["nav_page"] = page_id
     try:
         at.run()
