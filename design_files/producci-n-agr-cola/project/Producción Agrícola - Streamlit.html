@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producción Agrícola de Maíz — Colombia</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --green-deep: oklch(28% 0.10 145);
+    --green-mid: oklch(38% 0.14 148);
+    --green-bright: oklch(52% 0.18 148);
+    --green-light: oklch(72% 0.16 145);
+    --green-pale: oklch(92% 0.06 145);
+    --amber: oklch(68% 0.16 72);
+    --amber-light: oklch(88% 0.10 80);
+    --red-accent: oklch(55% 0.18 25);
+    --blue-accent: oklch(55% 0.16 240);
+    --bg: oklch(14% 0.03 145);
+    --bg2: oklch(18% 0.03 145);
+    --bg3: oklch(22% 0.03 145);
+    --border: oklch(30% 0.04 145);
+    --text: oklch(92% 0.02 145);
+    --text-muted: oklch(65% 0.04 145);
+    --sidebar-w: 260px;
+    --font: 'IBM Plex Sans', sans-serif;
+    --mono: 'IBM Plex Mono', monospace;
+  }
+  html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); font-size: 14px; }
+  #root { height: 100%; display: flex; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg2); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+// ─── DATA ENGINE ────────────────────────────────────────────────────────────
+// 120 "municipios" simulados con coordenadas realistas de Colombia
+const seed = (n) => { let x = Math.sin(n) * 10000; return x - Math.floor(x); };
+
+const REGIONES = ['Andina', 'Caribe', 'Pacífica', 'Orinoquía', 'Amazonía'];
+const REGION_BOUNDS = {
+  'Andina':    { latMin: 1, latMax: 8, lonMin: -76, lonMax: -72 },
+  'Caribe':    { latMin: 8, latMax: 12, lonMin: -76, lonMax: -72 },
+  'Pacífica':  { latMin: 1, latMax: 7, lonMin: -78, lonMax: -76 },
+  'Orinoquía': { latMin: 2, latMax: 7, lonMin: -72, lonMax: -67 },
+  'Amazonía':  { latMin: -4, latMax: 2, lonMin: -74, lonMax: -68 },
+};
+
+const MUNICIPIOS_BASE = [
+  'Montería','Sincelejo','Valledupar','Cereté','San Andrés de Sotavento',
+  'Sahagún','Lorica','Chinú','Planeta Rica','Montelíbano',
+  'Maicao','Riohacha','Fonseca','Manaure','San Juan del Cesar',
+  'Villavicencio','Puerto López','Acacías','Granada','San Martín',
+  'Restrepo','Cumaral','Puerto Gaitán','La Macarena','Mesetas',
+  'Ibagué','Espinal','Melgar','Chaparral','Purificación',
+  'Neiva','Garzón','Pitalito','La Plata','Campoalegre',
+  'Popayán','Santander de Quilichao','Patía','Miranda','Corinto',
+  'Tuluá','Buga','Palmira','Cartago','Roldanillo',
+  'Armenia','Quimbaya','Calarcá','Montenegro','La Tebaida',
+  'Pereira','Dosquebradas','Santa Rosa','Marsella','Balboa',
+  'Manizales','Chinchiná','Palestina','Villamaría','Neira',
+  'Duitama','Sogamoso','Tunja','Chiquinquirá','Paipa',
+  'Bucaramanga','Floridablanca','Girón','Piedecuesta','Lebrija',
+  'Cúcuta','Los Patios','Villa del Rosario','Ocaña','Pamplona',
+  'Bogotá','Soacha','Zipaquirá','Facatativá','Chía',
+  'Medellín','Bello','Itagüí','Envigado','Rionegro',
+  'Pasto','Ipiales','Túquerres','La Unión','Samaniego',
+  'Florencia','Belén de los Andaquíes','Morelia','Valparaíso','Albania',
+  'Yopal','Paz de Ariporo','Aguazul','Tauramena','Orocué',
+  'Puerto Inírida','Mitú','Puerto Carreño','San José del Guaviare','Leticia',
+  'Cartagena','Barranquilla','Santa Marta','Magangué','Mompox',
+  'Bogotá Rural','El Rosal','Mosquera','Madrid','Funza',
+  'Cali','Jamundí','Yumbo','Candelaria','Florida',
+  'Barrancabermeja','Puerto Berrío','Sabana de Torres','Puerto Wilches','Cimitarra',
+];
+
+function generateData() {
+  const years = [2018, 2019, 2020, 2021, 2022, 2023];
+  const municipios = [];
+
+  MUNICIPIOS_BASE.forEach((nombre, i) => {
+    const regionIdx = Math.floor(i / 24) % 5;
+    const region = REGIONES[regionIdx];
+    const b = REGION_BOUNDS[region];
+    const lat = b.latMin + seed(i * 7.3) * (b.latMax - b.latMin);
+    const lon = b.lonMin + seed(i * 3.7) * (b.lonMax - b.lonMin);
+
+    // Base yield influenced by spatial position (simulate spatial autocorrelation)
+    const baseYield = 2.5 + Math.sin(lat * 0.8) * 0.8 + Math.cos(lon * 0.6) * 0.6
+      + seed(i * 11) * 1.5 - 0.5;
+    const area = 500 + seed(i * 5.1) * 4500;
+
+    years.forEach(year => {
+      const yearEffect = (year - 2020) * 0.05;
+      const noise = seed(i * year * 0.001) * 0.6 - 0.3;
+      const precip = 800 + seed(i * year * 0.003) * 1400;
+      const temp = 18 + seed(i * year * 0.007) * 12;
+      const altitude = 100 + seed(i * 13) * 2800;
+      const nbi = 10 + seed(i * 17) * 70;
+      const dist_mercado = 10 + seed(i * 23) * 200;
+
+      const rendimiento = Math.max(0.5, baseYield + yearEffect + noise
+        + (precip > 1200 ? 0.3 : -0.2)
+        + (altitude > 1500 ? -0.4 : 0.1));
+
+      municipios.push({
+        id: i,
+        nombre,
+        region,
+        lat, lon,
+        year,
+        rendimiento: +rendimiento.toFixed(3),
+        produccion: +(rendimiento * area).toFixed(0),
+        area_sembrada: +area.toFixed(0),
+        precipitacion: +precip.toFixed(0),
+        temperatura: +temp.toFixed(1),
+        altitud: +altitude.toFixed(0),
+        nbi: +nbi.toFixed(1),
+        dist_mercado: +dist_mercado.toFixed(1),
+      });
+    });
+  });
+  return municipios;
+}
+
+const ALL_DATA = generateData();
+const YEARS = [2018, 2019, 2020, 2021, 2022, 2023];
+
+// ML MODEL SIMULATION
+function simulateModels(data) {
+  const models = {};
+  ['Random Forest','XGBoost','Lasso/Ridge','GWR','Kriging + ML'].forEach((m, mi) => {
+    const rmse_val = [0.41, 0.38, 0.52, 0.44, 0.31][mi];
+    const mae_val  = [0.31, 0.29, 0.40, 0.33, 0.23][mi];
+    const r2_val   = [0.71, 0.76, 0.61, 0.68, 0.83][mi];
+    const rmse_spatial = rmse_val + [0.09, 0.07, 0.15, 0.06, 0.04][mi];
+    models[m] = {
+      rmse: rmse_val, mae: mae_val, r2: r2_val,
+      rmse_spatial,
+      moran_residuos: [0.18, 0.15, 0.24, 0.09, 0.03][mi],
+      predictions: data.map((d, i) => {
+        const noise = seed(i * (mi+1) * 31) * rmse_val * 2 - rmse_val;
+        return { obs: d.rendimiento, pred: Math.max(0.3, d.rendimiento + noise), id: d.id, nombre: d.nombre };
+      })
+    };
+  });
+  return models;
+}
+
+// FEATURE IMPORTANCE (SHAP-like)
+const FEATURES = ['Precipitación','Temperatura','Altitud','NBI','Dist. Mercado','Área Sembrada'];
+const SHAP_RF  = [0.31, 0.22, 0.18, 0.11, 0.10, 0.08];
+const SHAP_XGB = [0.28, 0.25, 0.20, 0.12, 0.09, 0.06];
+const SHAP_LASSO=[0.27, 0.21, 0.22, 0.13, 0.09, 0.08];
+
+// MORAN SIMULATION
+function moranData(data) {
+  return data.map((d, i) => ({
+    ...d,
+    lag: d.rendimiento * 0.6 + seed(i * 99) * 0.8,
+    lisa: seed(i * 43) > 0.75 ? (d.rendimiento > 3.5 ? 'HH' : 'LL')
+         : seed(i * 43) > 0.55 ? (d.rendimiento > 3.5 ? 'HL' : 'LH')
+         : 'NS'
+  }));
+}
+
+// VARIOGRAM
+function variogramData() {
+  const lags = [10,20,30,40,50,60,70,80,90,100,120,140,160];
+  return lags.map((h, i) => {
+    const gamma = 0.28 * (1 - Math.exp(-h / 55)) + 0.04 + seed(i * 77) * 0.03;
+    const theoretical = 0.30 * (1 - Math.exp(-h / 58)) + 0.04;
+    return { h, gamma: +gamma.toFixed(3), theoretical: +theoretical.toFixed(3) };
+  });
+}
+
+// ─── MINI CHART COMPONENTS ──────────────────────────────────────────────────
+const C = {
+  // Colombia SVG choropleth (simplified)
+  Map: ({ data, colorKey, title, year }) => {
+    const filtered = data.filter(d => d.year === year);
+    const vals = filtered.map(d => d[colorKey]);
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const norm = v => (v - mn) / (mx - mn + 0.001);
+
+    // Color scale: cream → green → deep green
+    const getColor = v => {
+      const t = norm(v);
+      if (t < 0.25) return `oklch(${88 - t*20}% ${0.04 + t*0.08} 145)`;
+      if (t < 0.5)  return `oklch(${78 - t*20}% ${0.12 + t*0.06} 148)`;
+      if (t < 0.75) return `oklch(${55 - t*10}% 0.18 148)`;
+      return `oklch(${40 - t*8}% 0.20 148)`;
+    };
+
+    const W = 380, H = 320;
+    // Map lon/lat to SVG
+    const toX = lon => ((lon - (-79)) / ((-66) - (-79))) * (W - 40) + 20;
+    const toY = lat => H - ((lat - (-5)) / (13 - (-5))) * (H - 40) - 20;
+
+    return (
+      <div style={{ position: 'relative' }}>
+        <svg width={W} height={H} style={{ display: 'block', margin: '0 auto' }}>
+          {/* Colombia outline approximation */}
+          <polygon
+            points="80,20 200,15 280,40 320,80 340,140 320,200 290,260 240,300 180,310 120,290 60,240 30,180 20,120 40,60 80,20"
+            fill="oklch(22% 0.04 145)" stroke="oklch(35% 0.08 145)" strokeWidth="1.5"
+          />
+          {filtered.map((d, i) => {
+            const cx = toX(d.lon), cy = toY(d.lat);
+            if (cx < 10 || cx > W-10 || cy < 10 || cy > H-10) return null;
+            return (
+              <circle key={i} cx={cx} cy={cy} r={5}
+                fill={getColor(d[colorKey])}
+                stroke="oklch(14% 0.03 145)" strokeWidth={0.5}
+                opacity={0.9}
+              >
+                <title>{d.nombre}: {d[colorKey].toFixed(2)}</title>
+              </circle>
+            );
+          })}
+        </svg>
+        {/* Legend */}
+        <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'center', marginTop:6 }}>
+          <span style={{ color:'var(--text-muted)', fontSize:11 }}>{mn.toFixed(1)}</span>
+          <div style={{ width:120, height:10, borderRadius:5,
+            background:'linear-gradient(to right, oklch(88% 0.04 145), oklch(52% 0.18 148), oklch(30% 0.20 148))' }} />
+          <span style={{ color:'var(--text-muted)', fontSize:11 }}>{mx.toFixed(1)}</span>
+        </div>
+      </div>
+    );
+  },
+
+  // Bar chart
+  Bar: ({ data, xKey, yKey, color='var(--green-bright)', title, horizontal=false }) => {
+    const W = 360, H = 200;
+    const max = Math.max(...data.map(d => d[yKey]));
+    const barW = (W - 40) / data.length;
+    return (
+      <svg width={W} height={H}>
+        {data.map((d, i) => {
+          const h = ((d[yKey] / max) * (H - 50));
+          const x = 30 + i * barW + barW * 0.1;
+          const w = barW * 0.8;
+          return (
+            <g key={i}>
+              <rect x={x} y={H - 30 - h} width={w} height={h}
+                fill={color} rx={2} opacity={0.85} />
+              <text x={x + w/2} y={H - 14} textAnchor="middle"
+                fill="var(--text-muted)" fontSize={9} fontFamily="var(--mono)">
+                {typeof d[xKey] === 'string' ? d[xKey].slice(0,6) : d[xKey]}
+              </text>
+            </g>
+          );
+        })}
+        {/* Y axis */}
+        <line x1={28} y1={10} x2={28} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        <line x1={28} y1={H-28} x2={W-10} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        {[0, 0.25, 0.5, 0.75, 1].map(t => (
+          <text key={t} x={24} y={H - 28 - t*(H-50)}
+            textAnchor="end" fill="var(--text-muted)" fontSize={9} fontFamily="var(--mono)">
+            {(max * t).toFixed(1)}
+          </text>
+        ))}
+      </svg>
+    );
+  },
+
+  // Scatter plot
+  Scatter: ({ data, title, modelName }) => {
+    const W = 340, H = 260;
+    const vals = data.map(d => Math.max(d.obs, d.pred));
+    const max = Math.max(...vals) + 0.3;
+    const toX = v => 40 + (v / max) * (W - 50);
+    const toY = v => H - 30 - (v / max) * (H - 50);
+    return (
+      <svg width={W} height={H}>
+        {/* diagonal ref */}
+        <line x1={toX(0)} y1={toY(0)} x2={toX(max)} y2={toY(max)}
+          stroke="var(--amber)" strokeWidth={1} strokeDasharray="4 3" opacity={0.6}/>
+        {data.filter((_,i)=>i%3===0).map((d, i) => (
+          <circle key={i} cx={toX(d.obs)} cy={toY(d.pred)} r={3}
+            fill="var(--green-bright)" opacity={0.6} stroke="none"/>
+        ))}
+        <line x1={38} y1={10} x2={38} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        <line x1={38} y1={H-28} x2={W-10} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        <text x={W/2} y={H-8} textAnchor="middle" fill="var(--text-muted)" fontSize={10}>Observado (ton/ha)</text>
+        <text x={12} y={H/2} textAnchor="middle" fill="var(--text-muted)" fontSize={10}
+          transform={`rotate(-90,12,${H/2})`}>Predicho</text>
+        {[1,2,3,4,5].map(v => (
+          <text key={v} x={toX(v)} y={H-16} textAnchor="middle" fill="var(--text-muted)" fontSize={9} fontFamily="var(--mono)">{v}</text>
+        ))}
+      </svg>
+    );
+  },
+
+  // Horizontal bar (SHAP)
+  ShapBar: ({ features, values, color='var(--green-bright)' }) => {
+    const W = 340, H = features.length * 32 + 20;
+    const max = Math.max(...values);
+    return (
+      <svg width={W} height={H}>
+        {features.map((f, i) => {
+          const barW = (values[i] / max) * (W - 130);
+          return (
+            <g key={i}>
+              <text x={115} y={i*32+20} textAnchor="end" fill="var(--text)" fontSize={12} fontFamily="var(--font)">{f}</text>
+              <rect x={120} y={i*32+8} width={barW} height={18}
+                fill={color} rx={3} opacity={0.85}/>
+              <text x={125 + barW} y={i*32+21} fill="var(--text-muted)" fontSize={10} fontFamily="var(--mono)">
+                {(values[i]*100).toFixed(0)}%
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    );
+  },
+
+  // Variogram chart
+  Variogram: ({ data }) => {
+    const W = 380, H = 220;
+    const maxH = Math.max(...data.map(d => d.h));
+    const maxG = Math.max(...data.map(d => Math.max(d.gamma, d.theoretical))) * 1.1;
+    const toX = h => 45 + (h / maxH) * (W - 55);
+    const toY = g => H - 35 - (g / maxG) * (H - 50);
+    const pts = data.map(d => `${toX(d.h)},${toY(d.gamma)}`).join(' ');
+    const line = data.map(d => `${toX(d.h)},${toY(d.theoretical)}`).join(' ');
+    return (
+      <svg width={W} height={H}>
+        {/* sill / range guides */}
+        <line x1={45} y1={toY(0.30)} x2={W-10} y2={toY(0.30)}
+          stroke="var(--amber)" strokeWidth={1} strokeDasharray="5 3" opacity={0.5}/>
+        <text x={48} y={toY(0.30)-4} fill="var(--amber)" fontSize={9} opacity={0.7}>Sill ≈ 0.30</text>
+        <line x1={toX(58)} y1={35} x2={toX(58)} y2={H-35}
+          stroke="var(--amber)" strokeWidth={1} strokeDasharray="5 3" opacity={0.5}/>
+        <text x={toX(58)+3} y={48} fill="var(--amber)" fontSize={9} opacity={0.7}>Range ≈ 58km</text>
+        {/* theoretical line */}
+        <polyline points={line} fill="none" stroke="var(--green-light)" strokeWidth={2}/>
+        {/* empirical points */}
+        {data.map((d, i) => (
+          <circle key={i} cx={toX(d.h)} cy={toY(d.gamma)} r={4}
+            fill="var(--green-bright)" stroke="var(--bg)" strokeWidth={1.5}/>
+        ))}
+        {/* axes */}
+        <line x1={43} y1={20} x2={43} y2={H-33} stroke="var(--border)" strokeWidth={1}/>
+        <line x1={43} y1={H-33} x2={W-10} y2={H-33} stroke="var(--border)" strokeWidth={1}/>
+        <text x={W/2} y={H-8} textAnchor="middle" fill="var(--text-muted)" fontSize={10}>Distancia (km)</text>
+        <text x={12} y={H/2} textAnchor="middle" fill="var(--text-muted)" fontSize={10}
+          transform={`rotate(-90,12,${H/2})`}>γ(h)</text>
+        {[0,50,100,150].map(v => (
+          <text key={v} x={toX(v)} y={H-20} textAnchor="middle" fill="var(--text-muted)" fontSize={9} fontFamily="var(--mono)">{v}</text>
+        ))}
+        {/* legend */}
+        <circle cx={W-120} cy={18} r={4} fill="var(--green-bright)"/>
+        <text x={W-112} y={22} fill="var(--text-muted)" fontSize={10}>Empírico</text>
+        <line x1={W-60} y1={18} x2={W-45} y2={18} stroke="var(--green-light)" strokeWidth={2}/>
+        <text x={W-41} y={22} fill="var(--text-muted)" fontSize={10}>Teórico</text>
+      </svg>
+    );
+  },
+
+  // PDP chart
+  PDP: ({ feature }) => {
+    const W = 340, H = 180;
+    const pts = Array.from({length:20}, (_,i) => {
+      const x = i/19;
+      let y;
+      if (feature === 'Precipitación') y = 0.5 + 1.5 * (1 - Math.exp(-x*3)) + Math.sin(x*6)*0.1;
+      else if (feature === 'Temperatura') y = 2.5 - Math.pow((x-0.4)*2, 2) * 0.8;
+      else y = 2.0 - x * 0.8 + Math.sin(x*4)*0.15;
+      return { x, y: Math.max(0.5, y) };
+    });
+    const maxY = Math.max(...pts.map(p=>p.y));
+    const minY = Math.min(...pts.map(p=>p.y));
+    const toX = x => 40 + x*(W-50);
+    const toY = y => H-30 - ((y-minY)/(maxY-minY+0.01))*(H-50);
+    const path = pts.map((p,i) => `${i===0?'M':'L'}${toX(p.x)},${toY(p.y)}`).join(' ');
+    return (
+      <svg width={W} height={H}>
+        <path d={path} fill="none" stroke="var(--amber)" strokeWidth={2.5}/>
+        <path d={path + ` L${toX(1)},${H-30} L${toX(0)},${H-30} Z`}
+          fill="var(--amber)" opacity={0.12}/>
+        <line x1={38} y1={15} x2={38} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        <line x1={38} y1={H-28} x2={W-10} y2={H-28} stroke="var(--border)" strokeWidth={1}/>
+        <text x={W/2} y={H-10} textAnchor="middle" fill="var(--text-muted)" fontSize={10}>{feature}</text>
+      </svg>
+    );
+  },
+
+  // LISA map
+  LisaMap: ({ data, year }) => {
+    const filtered = data.filter(d => d.year === year);
+    const COLORS = { HH:'#22c55e', LL:'#ef4444', HL:'#3b82f6', LH:'#f59e0b', NS:'oklch(30% 0.03 145)' };
+    const W = 380, H = 320;
+    const toX = lon => ((lon - (-79)) / ((-66) - (-79))) * (W - 40) + 20;
+    const toY = lat => H - ((lat - (-5)) / (13 - (-5))) * (H - 40) - 20;
+    return (
+      <div>
+        <svg width={W} height={H} style={{ display:'block', margin:'0 auto' }}>
+          <polygon
+            points="80,20 200,15 280,40 320,80 340,140 320,200 290,260 240,300 180,310 120,290 60,240 30,180 20,120 40,60 80,20"
+            fill="oklch(22% 0.04 145)" stroke="oklch(35% 0.08 145)" strokeWidth="1.5"
+          />
+          {filtered.map((d, i) => {
+            const cx = toX(d.lon), cy = toY(d.lat);
+            if (cx < 10 || cx > W-10 || cy < 10 || cy > H-10) return null;
+            return (
+              <circle key={i} cx={cx} cy={cy} r={5}
+                fill={COLORS[d.lisa]} stroke="oklch(14% 0.03 145)" strokeWidth={0.5} opacity={0.85}>
+                <title>{d.nombre}: {d.lisa}</title>
+              </circle>
+            );
+          })}
+        </svg>
+        <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginTop:8 }}>
+          {Object.entries(COLORS).map(([k,v]) => (
+            <div key={k} style={{ display:'flex', alignItems:'center', gap:4 }}>
+              <div style={{ width:10, height:10, borderRadius:'50%', background:v }}></div>
+              <span style={{ fontSize:11, color:'var(--text-muted)' }}>{k}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+};
+
+// ─── UI COMPONENTS ───────────────────────────────────────────────────────────
+const Card = ({ children, style={} }) => (
+  <div style={{ background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:10, padding:16, ...style }}>
+    {children}
+  </div>
+);
+
+const SectionTitle = ({ children, sub }) => (
+  <div style={{ marginBottom:20 }}>
+    <h2 style={{ fontSize:18, fontWeight:600, color:'var(--text)' }}>{children}</h2>
+    {sub && <p style={{ fontSize:12, color:'var(--text-muted)', marginTop:4 }}>{sub}</p>}
+  </div>
+);
+
+const Metric = ({ label, value, unit='', color='var(--green-bright)', mono=true }) => (
+  <div style={{ background:'var(--bg3)', borderRadius:8, padding:'12px 16px', border:'1px solid var(--border)' }}>
+    <div style={{ fontSize:11, color:'var(--text-muted)', marginBottom:4 }}>{label}</div>
+    <div style={{ fontSize:22, fontWeight:600, fontFamily: mono ? 'var(--mono)' : 'var(--font)', color }}>
+      {value}<span style={{ fontSize:12, marginLeft:3, color:'var(--text-muted)' }}>{unit}</span>
+    </div>
+  </div>
+);
+
+const Select = ({ label, value, onChange, options }) => (
+  <div style={{ marginBottom:12 }}>
+    <label style={{ display:'block', fontSize:11, color:'var(--text-muted)', marginBottom:4 }}>{label}</label>
+    <select value={value} onChange={e => onChange(e.target.value)}
+      style={{ width:'100%', background:'var(--bg3)', color:'var(--text)', border:'1px solid var(--border)',
+        borderRadius:6, padding:'6px 8px', fontSize:12, fontFamily:'var(--font)', outline:'none' }}>
+      {options.map(o => <option key={o.value ?? o} value={o.value ?? o}>{o.label ?? o}</option>)}
+    </select>
+  </div>
+);
+
+const Slider = ({ label, value, onChange, min, max, step=1, unit='' }) => (
+  <div style={{ marginBottom:14 }}>
+    <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+      <label style={{ fontSize:11, color:'var(--text-muted)' }}>{label}</label>
+      <span style={{ fontSize:11, fontFamily:'var(--mono)', color:'var(--green-light)' }}>{value}{unit}</span>
+    </div>
+    <input type="range" min={min} max={max} step={step} value={value}
+      onChange={e => onChange(+e.target.value)}
+      style={{ width:'100%', accentColor:'var(--green-bright)', cursor:'pointer' }}/>
+  </div>
+);
+
+const Tag = ({ children, color='var(--green-bright)' }) => (
+  <span style={{ background:`${color}22`, color, border:`1px solid ${color}55`,
+    borderRadius:4, padding:'2px 8px', fontSize:11, fontFamily:'var(--mono)' }}>
+    {children}
+  </span>
+);
+
+// ─── PAGES ───────────────────────────────────────────────────────────────────
+
+function PageEDA({ year, region, setYear, setRegion }) {
+  const filtered = ALL_DATA.filter(d =>
+    d.year === year && (region === 'Todas' || d.region === region)
+  );
+  const avgRend = (filtered.reduce((s,d) => s+d.rendimiento, 0) / filtered.length).toFixed(2);
+  const totalProd = (filtered.reduce((s,d) => s+d.produccion, 0) / 1000).toFixed(0);
+  const maxMun = filtered.sort((a,b) => b.rendimiento - a.rendimiento)[0];
+  const minMun = [...filtered].sort((a,b) => a.rendimiento - b.rendimiento)[0];
+
+  const histData = Array.from({length:8}, (_,i) => {
+    const lo = 0.5 + i*0.75, hi = lo + 0.75;
+    return { rango: `${lo.toFixed(1)}`, count: filtered.filter(d => d.rendimiento >= lo && d.rendimiento < hi).length };
+  });
+
+  const byRegion = REGIONES.map(r => ({
+    region: r,
+    avg: +(ALL_DATA.filter(d=>d.year===year&&d.region===r).reduce((s,d)=>s+d.rendimiento,0) /
+           Math.max(1, ALL_DATA.filter(d=>d.year===year&&d.region===r).length)).toFixed(2)
+  }));
+
+  return (
+    <div>
+      <SectionTitle sub="Análisis exploratorio espacial del rendimiento municipal de maíz">
+        EDA Espacial
+      </SectionTitle>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <Metric label="Rendimiento promedio" value={avgRend} unit="ton/ha" />
+        <Metric label="Producción total" value={totalProd} unit="× 10³ ton" color="var(--amber)" />
+        <Metric label="Mayor rendimiento" value={maxMun?.rendimiento.toFixed(2)} unit="ton/ha" color="var(--green-light)" />
+        <Metric label="Municipios analizados" value={filtered.length} unit="muns" color="var(--text-muted)" mono={false}/>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            MAPA COROPLÉTICO — RENDIMIENTO (ton/ha) · {year}
+          </div>
+          <C.Map data={ALL_DATA} colorKey="rendimiento" year={year} />
+        </Card>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:8, color:'var(--text-muted)' }}>
+            DISTRIBUCIÓN DE RENDIMIENTO
+          </div>
+          <C.Bar data={histData} xKey="rango" yKey="count" color="var(--green-bright)"/>
+          <div style={{ fontSize:12, fontWeight:600, margin:'16px 0 8px', color:'var(--text-muted)' }}>
+            RENDIMIENTO PROMEDIO POR REGIÓN
+          </div>
+          <C.Bar data={byRegion.map(r=>({...r, xKey:r.region}))} xKey="region" yKey="avg" color="var(--amber)"/>
+        </Card>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, marginTop:16 }}>
+        {['precipitacion','temperatura','altitud'].map(feat => {
+          const label = { precipitacion:'Precipitación (mm)', temperatura:'Temperatura (°C)', altitud:'Altitud (msnm)' }[feat];
+          const pts = filtered.filter((_,i)=>i%2===0).map(d => ({ x: d[feat], y: d.rendimiento }));
+          const corr = feat === 'precipitacion' ? '+0.62' : feat === 'temperatura' ? '−0.38' : '−0.31';
+          return (
+            <Card key={feat}>
+              <div style={{ fontSize:11, color:'var(--text-muted)', marginBottom:6 }}>
+                Rendimiento vs {label} <Tag color={corr.startsWith('+') ? 'var(--green-bright)' : 'var(--red-accent)'}>r = {corr}</Tag>
+              </div>
+              <svg width="100%" height={130} viewBox="0 0 280 130">
+                {pts.map((p,i) => {
+                  const maxX = Math.max(...pts.map(q=>q.x)), minX = Math.min(...pts.map(q=>q.x));
+                  const maxY = Math.max(...pts.map(q=>q.y));
+                  return (
+                    <circle key={i}
+                      cx={35 + (p.x-minX)/(maxX-minX+1)*230}
+                      cy={115 - (p.y/maxY)*100}
+                      r={3} fill="var(--green-bright)" opacity={0.55}/>
+                  );
+                })}
+                <line x1={33} y1={10} x2={33} y2={115} stroke="var(--border)" strokeWidth={1}/>
+                <line x1={33} y1={115} x2={270} y2={115} stroke="var(--border)" strokeWidth={1}/>
+              </svg>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function PageMoran({ year }) {
+  const raw = ALL_DATA.filter(d => d.year === year);
+  const mData = moranData(raw);
+  const moranI = 0.42 - (year - 2018) * 0.01;
+  const pValue = 0.001;
+  const counts = { HH:0, LL:0, HL:0, LH:0, NS:0 };
+  mData.forEach(d => counts[d.lisa]++);
+
+  return (
+    <div>
+      <SectionTitle sub="Análisis de autocorrelación espacial — Índice de Moran e indicadores LISA">
+        Autocorrelación Espacial
+      </SectionTitle>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <Metric label="Índice de Moran I" value={moranI.toFixed(3)} color="var(--green-bright)" />
+        <Metric label="p-valor (permutación)" value={pValue} color="var(--amber)" />
+        <Metric label="Clusters HH" value={counts.HH} unit="muns" color="#22c55e" />
+        <Metric label="Clusters LL" value={counts.LL} unit="muns" color="#ef4444" />
+      </div>
+      <div style={{ background:'var(--bg2)', border:'1px solid oklch(45% 0.14 148 / 0.4)',
+        borderRadius:10, padding:'12px 16px', marginBottom:16, display:'flex', gap:12, alignItems:'center' }}>
+        <div style={{ width:6, height:40, borderRadius:3, background:'var(--green-bright)' }}></div>
+        <div>
+          <div style={{ fontSize:12, fontWeight:600, color:'var(--green-light)' }}>Autocorrelación espacial positiva significativa</div>
+          <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:2 }}>
+            I = {moranI.toFixed(3)} (p &lt; 0.001): municipios con alto rendimiento tienden a estar rodeados de municipios con alto rendimiento. La estructura espacial es relevante para el modelo.
+          </div>
+        </div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            MAPA LISA — CLUSTERS ESPACIALES · {year}
+          </div>
+          <C.LisaMap data={mData} year={year} />
+        </Card>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            DIAGRAMA DE MORAN — Rendimiento vs Lag Espacial
+          </div>
+          <svg width="340" height="280">
+            {mData.filter((_,i)=>i%2===0).map((d,i) => {
+              const COLORS = { HH:'#22c55e', LL:'#ef4444', HL:'#3b82f6', LH:'#f59e0b', NS:'oklch(50% 0.04 145)' };
+              return (
+                <circle key={i}
+                  cx={40 + (d.rendimiento/6)*280}
+                  cy={270 - (d.lag/6)*240}
+                  r={4} fill={COLORS[d.lisa]} opacity={0.7}/>
+              );
+            })}
+            {/* regression line */}
+            <line x1={40} y1={230} x2={320} y2={60} stroke="var(--amber)" strokeWidth={1.5} strokeDasharray="5 3"/>
+            <line x1={38} y1={20} x2={38} y2={270} stroke="var(--border)" strokeWidth={1}/>
+            <line x1={38} y1={268} x2={330} y2={268} stroke="var(--border)" strokeWidth={1}/>
+            <text x={185} y={285} textAnchor="middle" fill="var(--text-muted)" fontSize={10}>Rendimiento estandarizado</text>
+            <text x={12} y={145} textAnchor="middle" fill="var(--text-muted)" fontSize={10}
+              transform="rotate(-90,12,145)">Lag espacial</text>
+          </svg>
+          <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:8, lineHeight:1.6 }}>
+            <strong style={{color:'var(--text)'}}>Cuadrante I (HH):</strong> {counts.HH} muns — Alto rendimiento, vecinos altos<br/>
+            <strong style={{color:'var(--text)'}}>Cuadrante III (LL):</strong> {counts.LL} muns — Bajo rendimiento, vecinos bajos<br/>
+            <strong style={{color:'var(--text)'}}>Outliers HLyLH:</strong> {counts.HL + counts.LH} muns — Atípicos espaciales
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function PageML({ year, model, setModel, nTrees, setNTrees, maxDepth, setMaxDepth, alpha, setAlpha, shapFeature, setShapFeature }) {
+  const MODELS_DATA = simulateModels(ALL_DATA.filter(d=>d.year===year));
+  const modelData = MODELS_DATA[model];
+  const shapValues = model === 'Random Forest' ? SHAP_RF : model === 'XGBoost' ? SHAP_XGB : SHAP_LASSO;
+  const pdpFeatures = ['Precipitación','Temperatura','Altitud'];
+
+  return (
+    <div>
+      <SectionTitle sub="Modelado predictivo del rendimiento agrícola con Machine Learning">
+        Modelos ML
+      </SectionTitle>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <Metric label="RMSE (CV aleatoria)" value={modelData.rmse.toFixed(3)} unit="ton/ha" color="var(--amber)"/>
+        <Metric label="MAE" value={modelData.mae.toFixed(3)} unit="ton/ha" color="var(--amber)"/>
+        <Metric label="R²" value={modelData.r2.toFixed(3)} color="var(--green-bright)"/>
+        <Metric label="Moran I residuos" value={modelData.moran_residuos.toFixed(3)}
+          color={modelData.moran_residuos > 0.1 ? 'var(--red-accent)' : 'var(--green-light)'}/>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            IMPORTANCIA DE VARIABLES (SHAP) — {model}
+          </div>
+          <C.ShapBar features={FEATURES} values={shapValues} color="var(--green-bright)"/>
+        </Card>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            OBSERVADO vs PREDICHO — {model}
+          </div>
+          <C.Scatter data={modelData.predictions} modelName={model}/>
+          <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:8 }}>
+            Línea diagonal punteada = predicción perfecta · Puntos alejados = municipios con alta incertidumbre
+          </div>
+        </Card>
+      </div>
+      <div style={{ marginTop:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            GRÁFICOS DE DEPENDENCIA PARCIAL (PDP) — Efecto marginal de cada variable
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12 }}>
+            {pdpFeatures.map(f => (
+              <div key={f}>
+                <div style={{ fontSize:11, color:'var(--text-muted)', marginBottom:4 }}>{f}</div>
+                <C.PDP feature={f}/>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+      {modelData.moran_residuos > 0.1 && (
+        <div style={{ background:'var(--bg2)', border:'1px solid oklch(55% 0.18 25 / 0.4)',
+          borderRadius:10, padding:'12px 16px', marginTop:16, display:'flex', gap:12, alignItems:'center' }}>
+          <div style={{ width:6, height:36, borderRadius:3, background:'var(--red-accent)', flexShrink:0 }}></div>
+          <div>
+            <div style={{ fontSize:12, fontWeight:600, color:'var(--red-accent)' }}>
+              Autocorrelación residual detectada (I = {modelData.moran_residuos.toFixed(3)})
+            </div>
+            <div style={{ fontSize:12, color:'var(--text-muted)', marginTop:2 }}>
+              El modelo {model} no captura completamente la estructura espacial. Se recomienda aplicar Kriging de residuos o un modelo espacial explícito.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PageKriging({ year }) {
+  const vData = variogramData();
+  const raw = ALL_DATA.filter(d => d.year === year);
+  const MODELS_DATA = simulateModels(raw);
+
+  return (
+    <div>
+      <SectionTitle sub="Kriging de residuos — captura la estructura espacial no explicada por el ML">
+        Kriging de Residuos
+      </SectionTitle>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:10, marginBottom:20 }}>
+        <Metric label="Nugget" value="0.040" unit="(ton/ha)²" color="var(--text-muted)"/>
+        <Metric label="Sill" value="0.300" unit="(ton/ha)²" color="var(--green-bright)"/>
+        <Metric label="Range" value="58" unit="km" color="var(--amber)"/>
+        <Metric label="Modelo ajustado" value="Exp." mono={false} color="var(--green-light)"/>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            VARIOGRAMA EMPÍRICO + MODELO TEÓRICO (Exponencial)
+          </div>
+          <C.Variogram data={vData}/>
+          <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:10, lineHeight:1.7 }}>
+            El variograma confirma dependencia espacial hasta ~58 km. Más allá de ese rango los residuos son independientes. El nugget bajo (0.04) indica alta reproducibilidad espacial del error.
+          </div>
+        </Card>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            MAPA DE RESIDUOS ESPACIALES — RF + Kriging
+          </div>
+          {/* Residual map: color divergente centrado en 0 */}
+          <svg width={380} height={310} style={{ display:'block', margin:'0 auto' }}>
+            <polygon
+              points="80,20 200,15 280,40 320,80 340,140 320,200 290,260 240,300 180,310 120,290 60,240 30,180 20,120 40,60 80,20"
+              fill="oklch(22% 0.04 145)" stroke="oklch(35% 0.08 145)" strokeWidth="1.5"
+            />
+            {raw.map((d, i) => {
+              const lon = d.lon, lat = d.lat;
+              const cx = ((lon - (-79)) / (13)) * 340 + 20;
+              const cy = 310 - ((lat - (-5)) / 18) * 290 - 10;
+              if (cx < 10 || cx > 370 || cy < 10 || cy > 300) return null;
+              const resid = MODELS_DATA['Random Forest'].predictions[i]?.pred - d.rendimiento;
+              const t = Math.max(-1, Math.min(1, (resid || 0) * 2));
+              const col = t > 0
+                ? `oklch(${55+t*15}% ${0.15+t*0.08} 148)`
+                : `oklch(${55+Math.abs(t)*10}% ${0.15+Math.abs(t)*0.08} 25)`;
+              return <circle key={i} cx={cx} cy={cy} r={5} fill={col} opacity={0.85} stroke="none">
+                <title>{d.nombre}: residuo ≈ {(resid||0).toFixed(2)}</title>
+              </circle>;
+            })}
+          </svg>
+          <div style={{ display:'flex', alignItems:'center', gap:8, justifyContent:'center', marginTop:6 }}>
+            <span style={{ fontSize:11, color:'var(--red-accent)' }}>Subestimado</span>
+            <div style={{ width:120, height:10, borderRadius:5,
+              background:'linear-gradient(to right, oklch(60% 0.22 25), oklch(22% 0.04 145), oklch(65% 0.22 148))' }}/>
+            <span style={{ fontSize:11, color:'var(--green-light)' }}>Sobreestimado</span>
+          </div>
+        </Card>
+      </div>
+      <div style={{ marginTop:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            REDUCCIÓN DE ERROR: ML puro vs ML + Kriging de Residuos
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:16 }}>
+            {['Random Forest','XGBoost','Lasso/Ridge'].map(m => {
+              const base = simulateModels(raw)[m];
+              const kriging = simulateModels(raw)['Kriging + ML'];
+              const delta = ((base.rmse - kriging.rmse) / base.rmse * 100);
+              return (
+                <div key={m} style={{ background:'var(--bg3)', borderRadius:8, padding:14, border:'1px solid var(--border)' }}>
+                  <div style={{ fontSize:12, fontWeight:600, marginBottom:8 }}>{m}</div>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6 }}>
+                    <span style={{ fontSize:11, color:'var(--text-muted)' }}>RMSE base</span>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:12, color:'var(--amber)' }}>{base.rmse.toFixed(3)}</span>
+                  </div>
+                  <div style={{ display:'flex', justifyContent:'space-between', marginBottom:10 }}>
+                    <span style={{ fontSize:11, color:'var(--text-muted)' }}>RMSE + Kriging</span>
+                    <span style={{ fontFamily:'var(--mono)', fontSize:12, color:'var(--green-bright)' }}>{kriging.rmse.toFixed(3)}</span>
+                  </div>
+                  <div style={{ background:`var(--green-bright)22`, borderRadius:6, padding:'6px 10px', textAlign:'center' }}>
+                    <span style={{ fontFamily:'var(--mono)', color:'var(--green-light)', fontSize:14, fontWeight:600 }}>
+                      −{delta.toFixed(1)}% RMSE
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function PageComparacion({ year, model, setModel }) {
+  const raw = ALL_DATA.filter(d => d.year === year);
+  const MODELS_DATA = simulateModels(raw);
+  const allModels = Object.keys(MODELS_DATA);
+
+  return (
+    <div>
+      <SectionTitle sub="Comparación de todos los modelos: ML clásico, GWR y Kriging de residuos">
+        Comparación de Modelos
+      </SectionTitle>
+      <Card style={{ marginBottom:20 }}>
+        <div style={{ fontSize:12, fontWeight:600, marginBottom:14, color:'var(--text-muted)' }}>
+          TABLA COMPARATIVA — MÉTRICAS DE DESEMPEÑO · {year}
+        </div>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontFamily:'var(--mono)', fontSize:12 }}>
+            <thead>
+              <tr>
+                {['Modelo','RMSE (CV aleat.)','RMSE (CV espacial)','MAE','R²','Moran I residuos','Ranking'].map(h => (
+                  <th key={h} style={{ textAlign:'left', padding:'8px 12px', borderBottom:'1px solid var(--border)',
+                    color:'var(--text-muted)', fontWeight:500, whiteSpace:'nowrap' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {allModels.map((m, i) => {
+                const d = MODELS_DATA[m];
+                const isBest = m === 'Kriging + ML';
+                return (
+                  <tr key={m} style={{ background: isBest ? 'oklch(38% 0.14 148 / 0.12)' : 'transparent' }}>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)', color: isBest ? 'var(--green-light)' : 'var(--text)', fontWeight: isBest ? 600 : 400, fontFamily:'var(--font)' }}>
+                      {m} {isBest && <Tag color="var(--green-bright)">★ mejor</Tag>}
+                    </td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)',
+                      color: d.rmse < 0.40 ? 'var(--green-bright)' : d.rmse > 0.50 ? 'var(--red-accent)' : 'var(--amber)' }}>
+                      {d.rmse.toFixed(3)}
+                    </td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)', color:'var(--text-muted)' }}>
+                      {d.rmse_spatial.toFixed(3)}
+                    </td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)' }}>{d.mae.toFixed(3)}</td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)',
+                      color: d.r2 > 0.75 ? 'var(--green-bright)' : 'var(--text)' }}>
+                      {d.r2.toFixed(3)}
+                    </td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)',
+                      color: d.moran_residuos > 0.1 ? 'var(--red-accent)' : 'var(--green-bright)' }}>
+                      {d.moran_residuos.toFixed(3)}
+                      {d.moran_residuos > 0.1 && <span style={{marginLeft:6, fontSize:10}}>⚠</span>}
+                    </td>
+                    <td style={{ padding:'10px 12px', borderBottom:'1px solid var(--border)', textAlign:'center' }}>
+                      {['3','2','5','4','1'][i]}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ fontSize:11, color:'var(--text-muted)', marginTop:10 }}>
+          CV espacial = validación cruzada por bloques departamentales · Brecha CV aleatoria vs CV espacial indica fuga de autocorrelación
+        </div>
+      </Card>
+
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            RMSE POR MODELO — CV aleatoria vs espacial
+          </div>
+          <svg width="360" height="200">
+            {allModels.map((m, i) => {
+              const d = MODELS_DATA[m];
+              const x = 40 + i * 64;
+              const hBase = (d.rmse / 0.6) * 140;
+              const hSpat = (d.rmse_spatial / 0.6) * 140;
+              return (
+                <g key={m}>
+                  <rect x={x} y={165-hBase} width={22} height={hBase} fill="var(--green-bright)" rx={2} opacity={0.85}/>
+                  <rect x={x+24} y={165-hSpat} width={22} height={hSpat} fill="var(--amber)" rx={2} opacity={0.85}/>
+                  <text x={x+23} y={185} textAnchor="middle" fill="var(--text-muted)" fontSize={8}>
+                    {m.slice(0,8)}
+                  </text>
+                </g>
+              );
+            })}
+            <line x1={38} y1={15} x2={38} y2={168} stroke="var(--border)" strokeWidth={1}/>
+            <line x1={38} y1={166} x2={345} y2={166} stroke="var(--border)" strokeWidth={1}/>
+            <circle cx={60} cy={195} r={5} fill="var(--green-bright)"/>
+            <text x={68} y={199} fill="var(--text-muted)" fontSize={10}>CV aleatoria</text>
+            <circle cx={150} cy={195} r={5} fill="var(--amber)"/>
+            <text x={158} y={199} fill="var(--text-muted)" fontSize={10}>CV espacial</text>
+          </svg>
+        </Card>
+        <Card>
+          <div style={{ fontSize:12, fontWeight:600, marginBottom:12, color:'var(--text-muted)' }}>
+            MORAN I EN RESIDUOS — Autocorrelación no capturada
+          </div>
+          <svg width="360" height="200">
+            <line x1={38} y1={155} x2={340} y2={155} stroke="var(--border)" strokeWidth={1}/>
+            <line x1={38} y1={20} x2={38} y2={158} stroke="var(--border)" strokeWidth={1}/>
+            {/* Threshold line */}
+            <line x1={38} y1={155-(0.1/0.30)*135} x2={340} y2={155-(0.1/0.30)*135}
+              stroke="var(--red-accent)" strokeWidth={1} strokeDasharray="4 3" opacity={0.6}/>
+            <text x={42} y={155-(0.1/0.30)*135-4} fill="var(--red-accent)" fontSize={9} opacity={0.7}>
+              umbral p=0.05
+            </text>
+            {allModels.map((m, i) => {
+              const d = MODELS_DATA[m];
+              const h = (d.moran_residuos / 0.30) * 135;
+              const x = 50 + i * 60;
+              return (
+                <g key={m}>
+                  <rect x={x} y={155-h} width={36} height={h}
+                    fill={d.moran_residuos > 0.1 ? 'var(--red-accent)' : 'var(--green-bright)'}
+                    rx={2} opacity={0.85}/>
+                  <text x={x+18} y={172} textAnchor="middle" fill="var(--text-muted)" fontSize={8}>
+                    {m.slice(0,7)}
+                  </text>
+                  <text x={x+18} y={155-h-4} textAnchor="middle" fill="var(--text-muted)" fontSize={9} fontFamily="var(--mono)">
+                    {d.moran_residuos.toFixed(2)}
+                  </text>
+                </g>
+              );
+            })}
+          </svg>
+        </Card>
+      </div>
+
+      <Card style={{ marginTop:16 }}>
+        <div style={{ fontSize:12, fontWeight:600, marginBottom:14, color:'var(--text-muted)' }}>
+          CONCLUSIÓN COMPARATIVA
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:12, fontSize:12, lineHeight:1.7 }}>
+          <div style={{ background:'var(--bg3)', borderRadius:8, padding:14, borderLeft:'3px solid var(--green-bright)' }}>
+            <div style={{ fontWeight:600, marginBottom:6, color:'var(--green-light)' }}>ML + Kriging de Residuos</div>
+            <div style={{ color:'var(--text-muted)' }}>Mejor desempeño global. RMSE = 0.31, R² = 0.83, Moran I residuos = 0.03 (no significativo). Combina poder predictivo del ML con corrección espacial explícita.</div>
+          </div>
+          <div style={{ background:'var(--bg3)', borderRadius:8, padding:14, borderLeft:'3px solid var(--amber)' }}>
+            <div style={{ fontWeight:600, marginBottom:6, color:'var(--amber)' }}>Brecha CV aleatoria/espacial</div>
+            <div style={{ color:'var(--text-muted)' }}>Lasso/Ridge muestra la mayor brecha (+0.15), indicando que explota la autocorrelación espacial durante entrenamiento. XGBoost es el ML puro más robusto a esta brecha (+0.07).</div>
+          </div>
+          <div style={{ background:'var(--bg3)', borderRadius:8, padding:14, borderLeft:'3px solid var(--red-accent)' }}>
+            <div style={{ fontWeight:600, marginBottom:6, color:'var(--red-accent)' }}>Autocorrelación residual</div>
+            <div style={{ color:'var(--text-muted)' }}>Random Forest (0.18) y Lasso (0.24) dejan estructura espacial significativa en residuos. El GWR reduce parcialmente (0.09). Solo ML+Kriging la elimina (0.03).</div>
+          </div>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ─── MAIN APP ────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = React.useState('eda');
+  const [year, setYear] = React.useState(2023);
+  const [region, setRegion] = React.useState('Todas');
+  const [model, setModel] = React.useState('Random Forest');
+  const [nTrees, setNTrees] = React.useState(100);
+  const [maxDepth, setMaxDepth] = React.useState(6);
+  const [alpha, setAlpha] = React.useState(0.1);
+  const [shapFeature, setShapFeature] = React.useState('Precipitación');
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  const NAV = [
+    { id:'eda', icon:'◈', label:'EDA Espacial', sub:'Mapas coropléticos' },
+    { id:'moran', icon:'⬡', label:'Autocorrelación', sub:'Moran / LISA' },
+    { id:'ml', icon:'◆', label:'Modelos ML', sub:'RF / XGBoost / Lasso' },
+    { id:'kriging', icon:'◉', label:'Kriging de Residuos', sub:'Variograma + mapa' },
+    { id:'comp', icon:'▦', label:'Comparación', sub:'Tabla RMSE / MAE' },
+  ];
+
+  return (
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden' }}>
+      {/* SIDEBAR */}
+      <div style={{
+        width: sidebarCollapsed ? 52 : 260,
+        background:'var(--bg2)',
+        borderRight:'1px solid var(--border)',
+        display:'flex', flexDirection:'column',
+        transition:'width 0.2s ease',
+        flexShrink:0, overflow:'hidden'
+      }}>
+        {/* Header */}
+        <div style={{ padding:'16px 14px', borderBottom:'1px solid var(--border)' }}>
+          {!sidebarCollapsed && (
+            <div>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+                <div style={{ width:28, height:28, background:'var(--green-bright)', borderRadius:6,
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:14, flexShrink:0 }}>🌽</div>
+                <div>
+                  <div style={{ fontSize:12, fontWeight:700, color:'var(--green-light)', lineHeight:1.2 }}>Producción</div>
+                  <div style={{ fontSize:11, fontWeight:700, color:'var(--green-light)', lineHeight:1.2 }}>Agrícola · Maíz</div>
+                </div>
+              </div>
+              <div style={{ fontSize:10, color:'var(--text-muted)', fontFamily:'var(--mono)' }}>
+                Colombia · 2018–2023 · 120 muns
+              </div>
+            </div>
+          )}
+          {sidebarCollapsed && (
+            <div style={{ width:28, height:28, background:'var(--green-bright)', borderRadius:6,
+              display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>🌽</div>
+          )}
+        </div>
+
+        {/* Nav */}
+        <nav style={{ padding:'10px 8px', flex:1, overflowY:'auto' }}>
+          {!sidebarCollapsed && (
+            <div style={{ fontSize:10, color:'var(--text-muted)', padding:'4px 6px 8px',
+              textTransform:'uppercase', letterSpacing:'0.08em' }}>Navegación</div>
+          )}
+          {NAV.map(n => (
+            <button key={n.id} onClick={() => setPage(n.id)}
+              style={{
+                width:'100%', textAlign:'left', background: page===n.id ? 'oklch(38% 0.14 148 / 0.25)' : 'transparent',
+                border:'none', borderRadius:7, padding: sidebarCollapsed ? '10px 12px' : '10px 10px',
+                cursor:'pointer', marginBottom:2, display:'flex', alignItems:'center', gap:10,
+                borderLeft: page===n.id ? '3px solid var(--green-bright)' : '3px solid transparent',
+                transition:'all 0.15s'
+              }}>
+              <span style={{ fontSize:16, flexShrink:0, color: page===n.id ? 'var(--green-bright)' : 'var(--text-muted)' }}>
+                {n.icon}
+              </span>
+              {!sidebarCollapsed && (
+                <div>
+                  <div style={{ fontSize:12, fontWeight: page===n.id ? 600 : 400,
+                    color: page===n.id ? 'var(--text)' : 'var(--text-muted)' }}>{n.label}</div>
+                  <div style={{ fontSize:10, color:'var(--text-muted)' }}>{n.sub}</div>
+                </div>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        {/* Controls */}
+        {!sidebarCollapsed && (
+          <div style={{ padding:'12px 12px', borderTop:'1px solid var(--border)' }}>
+            <div style={{ fontSize:10, color:'var(--text-muted)', marginBottom:10,
+              textTransform:'uppercase', letterSpacing:'0.08em' }}>Filtros globales</div>
+            <Select label="Año" value={year} onChange={v => setYear(+v)}
+              options={YEARS.map(y => ({ value:y, label:String(y) }))}/>
+            <Select label="Región" value={region} onChange={setRegion}
+              options={['Todas',...REGIONES].map(r => ({ value:r, label:r }))}/>
+            {(page==='ml') && (
+              <>
+                <Select label="Modelo" value={model} onChange={setModel}
+                  options={['Random Forest','XGBoost','Lasso/Ridge','GWR'].map(m => ({ value:m, label:m }))}/>
+                {model === 'Random Forest' && (
+                  <Slider label="N° árboles" value={nTrees} onChange={setNTrees} min={10} max={500} step={10}/>
+                )}
+                {model === 'Random Forest' && (
+                  <Slider label="Max depth" value={maxDepth} onChange={setMaxDepth} min={2} max={20}/>
+                )}
+                {model === 'Lasso/Ridge' && (
+                  <Slider label="Alpha (λ)" value={alpha} onChange={setAlpha} min={0.01} max={1} step={0.01}/>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Collapse button */}
+        <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          style={{ padding:'10px', background:'var(--bg3)', border:'none',
+            borderTop:'1px solid var(--border)', cursor:'pointer', color:'var(--text-muted)',
+            fontSize:12, fontFamily:'var(--font)', display:'flex', alignItems:'center',
+            justifyContent: sidebarCollapsed ? 'center' : 'flex-end', gap:6 }}>
+          {sidebarCollapsed ? '›' : '‹ Colapsar'}
+        </button>
+      </div>
+
+      {/* MAIN */}
+      <div style={{ flex:1, overflow:'auto', background:'var(--bg)' }}>
+        {/* Top bar */}
+        <div style={{ background:'var(--bg2)', borderBottom:'1px solid var(--border)',
+          padding:'10px 24px', display:'flex', alignItems:'center', justifyContent:'space-between',
+          position:'sticky', top:0, zIndex:10 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+            <span style={{ fontSize:12, color:'var(--text-muted)' }}>
+              {NAV.find(n=>n.id===page)?.label}
+            </span>
+            <span style={{ fontSize:11, color:'var(--border)' }}>›</span>
+            <span style={{ fontSize:11, color:'var(--text-muted)' }}>Cultivo: Maíz</span>
+            <Tag color="var(--green-bright)">{year}</Tag>
+            {region !== 'Todas' && <Tag color="var(--amber)">{region}</Tag>}
+          </div>
+          <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+            <span style={{ fontFamily:'var(--mono)', fontSize:11, color:'var(--text-muted)' }}>
+              Estadística Espacial + ML · Proyecto 04
+            </span>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ padding:24 }}>
+          {page==='eda' && <PageEDA year={year} region={region} setYear={setYear} setRegion={setRegion}/>}
+          {page==='moran' && <PageMoran year={year}/>}
+          {page==='ml' && <PageML year={year} model={model} setModel={setModel}
+            nTrees={nTrees} setNTrees={setNTrees} maxDepth={maxDepth} setMaxDepth={setMaxDepth}
+            alpha={alpha} setAlpha={setAlpha} shapFeature={shapFeature} setShapFeature={setShapFeature}/>}
+          {page==='kriging' && <PageKriging year={year}/>}
+          {page==='comp' && <PageComparacion year={year} model={model} setModel={setModel}/>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

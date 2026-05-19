@@ -1,0 +1,20 @@
+2026-05-03 22:11:14.187 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.188 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.189 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.189 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.189 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.190 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.190 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.190 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-05-03 22:11:14.381 WARNING streamlit: 
+  [33m[1mWarning:[0m to view a Streamlit app on a browser, use Streamlit in a file and
+  run it with the following command:
+
+    streamlit run [FILE_NAME] [ARGUMENTS]
+2026-05-03 22:11:14.381 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-05-03 22:11:14.381 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'MainThread': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-05-03 22:11:14.382 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.746 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
+2026-05-03 22:11:14.887 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-1': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-05-03 22:11:14.887 WARNING streamlit.runtime.scriptrunner_utils.script_run_context: Thread 'Thread-1': missing ScriptRunContext! This warning can be ignored when running in bare mode.
+2026-05-03 22:11:18.854 WARNING streamlit.runtime.caching.cache_data_api: No runtime found, using MemoryCacheStorageManager
