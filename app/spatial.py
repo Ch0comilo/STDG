@@ -8,6 +8,53 @@ from libpysal.weights import KNN
 from esda.moran import Moran, Moran_Local
 
 
+from pykrige.ok import OrdinaryKriging
+
+
+@st.cache_data(show_spinner="Calculando variograma…")
+def compute_variogram(df: pd.DataFrame, value_col: str = "rendimiento",
+                      year: int | None = None) -> dict:
+    """Compute empirical and theoretical variogram using PyKrige."""
+    if year is not None:
+        sub = df[df["anio"] == year].copy()
+    else:
+        sub = df.copy()
+
+    agg = sub.groupby(["dane_code", "lat", "lon"])[value_col].mean().reset_index()
+    if len(agg) < 10:
+        return {"h": [], "gamma_emp": [], "gamma_theo": [], "sill": 0, "range": 0}
+
+    # PyKrige OrdinaryKriging automatically computes the variogram
+    # We use it as a proxy to get the variogram data
+    ok = OrdinaryKriging(
+        agg["lon"], agg["lat"], agg[value_col],
+        variogram_model="exponential", verbose=False, enable_plotting=False
+    )
+
+    # Extract variogram data from the model
+    # PyKrige stores it in ok.variogram_model_parameters and we can reconstruct it
+    # or look at ok.lags and ok.semivariance
+    h = ok.lags
+    gamma_emp = ok.semivariance
+    
+    # Generate theoretical curve
+    h_theo = np.linspace(0, h.max(), 100)
+    # Reconstruct theoretical gamma based on model
+    p = ok.variogram_model_parameters
+    # Exponential: sill * (1 - exp(-h/range)) + nugget
+    gamma_theo = p[0] * (1 - np.exp(-h_theo / p[1])) + p[2]
+
+    return {
+        "h": h,
+        "gamma_emp": gamma_emp,
+        "h_theo": h_theo,
+        "gamma_theo": gamma_theo,
+        "sill": p[0] + p[2],
+        "range": p[1],
+        "nugget": p[2]
+    }
+
+
 @st.cache_data(show_spinner="Calculando Moran I y LISA…")
 def compute_moran(df: pd.DataFrame, value_col: str = "rendimiento",
                    k: int = 8, year: int | None = None) -> dict:

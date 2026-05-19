@@ -1,75 +1,61 @@
 """Theme constants and CSS injection for the Maíz dashboard.
 
-Dark forest-green shell with high-contrast cards and bright choropleth palette.
-Fonts intentionally bumped to feel like a real dashboard, not a slide deck.
+Mirrors the dark forest-green aesthetic from the design handoff
+(Producción Agrícola - Streamlit v2.html).
 """
 import streamlit as st
 
 
+# Hex palette — used everywhere (Plotly does not accept oklch).
 PALETTE = {
-    "bg":          "#161e18",
-    "panel":       "#1b251e",
-    "panel_alt":   "#1d2820",
-    "card":        "#243027",
-    "card_light":  "#eef2ee",   # for map containers — high contrast
-    "border":      "#2f3d33",
-    "border_2":    "#2a3830",
-    "text":        "#f0f6f1",
-    "text_dim":    "#b4c2b8",
-    "text_dimmer": "#94a39a",
-    "accent":      "#4dbb58",
-    "accent_hi":   "#86e88f",
-    "amber":       "#f0b34a",
-    "ok":          "#5ee08a",
+    "bg":          "#161e18",   # ~oklch(14% 0.03 145)
+    "panel":       "#1b251e",   # ~oklch(17% 0.03 145)
+    "panel_alt":   "#1d2820",   # ~oklch(18% 0.03 145)
+    "card":        "#243027",   # ~oklch(22% 0.03 145)
+    "border":      "#2f3d33",   # ~oklch(28% 0.04 145)
+    "border_2":    "#2a3830",   # ~oklch(25% 0.04 145)
+    "text":        "#e6efe9",   # ~oklch(92% 0.02 145)
+    "text_dim":    "#9aa89e",   # ~oklch(60% 0.04 145)
+    "text_dimmer": "#7d8a82",   # ~oklch(50% 0.04 145)
+    "accent":      "#3f9b48",   # ~oklch(52% 0.18 148)
+    "accent_hi":   "#6cd676",   # ~oklch(72% 0.16 145)
+    "amber":       "#d99e30",   # ~oklch(68% 0.16 72)
+    "ok":          "#4ade80",
     "warn":        "#f59e0b",
     "bad":         "#f87171",
-    "info":        "#60a5fa",
-    "purple":      "#b9a4ff",
+    "info":        "#3b82f6",
+    "purple":      "#a78bfa",
 }
 
 PLOTLY_LAYOUT = {
     "paper_bgcolor": "rgba(0,0,0,0)",
     "plot_bgcolor":  "rgba(0,0,0,0)",
-    "font": {"family": "IBM Plex Sans, sans-serif", "color": "#e6efe9", "size": 13},
-    "xaxis": {"gridcolor": "rgba(255,255,255,0.09)", "zerolinecolor": "rgba(255,255,255,0.14)",
-              "tickfont": {"color": "#cbd5d0", "size": 12},
-              "title": {"font": {"color": "#cbd5d0", "size": 13}}},
-    "yaxis": {"gridcolor": "rgba(255,255,255,0.09)", "zerolinecolor": "rgba(255,255,255,0.14)",
-              "tickfont": {"color": "#cbd5d0", "size": 12},
-              "title": {"font": {"color": "#cbd5d0", "size": 13}}},
-    "margin": {"l": 56, "r": 24, "t": 36, "b": 46},
-    "legend": {"font": {"color": "#e6efe9", "size": 12}, "bgcolor": "rgba(0,0,0,0)"},
-    "hoverlabel": {"bgcolor": "#243027", "bordercolor": "#5ee08a",
-                    "font": {"color": "#f0f6f1", "size": 13}},
+    "font": {"family": "IBM Plex Sans, sans-serif", "color": "#cfd8d2", "size": 11},
+    "xaxis": {"gridcolor": "rgba(255,255,255,0.06)", "zerolinecolor": "rgba(255,255,255,0.10)",
+              "tickfont": {"color": "#9aa89e"}, "title": {"font": {"color": "#9aa89e"}}},
+    "yaxis": {"gridcolor": "rgba(255,255,255,0.06)", "zerolinecolor": "rgba(255,255,255,0.10)",
+              "tickfont": {"color": "#9aa89e"}, "title": {"font": {"color": "#9aa89e"}}},
+    "margin": {"l": 50, "r": 20, "t": 30, "b": 40},
+    "legend": {"font": {"color": "#cfd8d2"}, "bgcolor": "rgba(0,0,0,0)"},
+    "hoverlabel": {"bgcolor": "#1d251f", "bordercolor": "#3b4d40",
+                    "font": {"color": "#e6efe9"}},
 }
 
-# Brighter choropleth scale — visible on a light or dark base. Yellow → orange → green.
+# Choropleth scale: cream → yellow-green → forest
 CHORO_SCALE = [
-    [0.00, "#fff5b8"],
-    [0.20, "#ffd166"],
-    [0.45, "#ff9f1c"],
-    [0.70, "#3dab5a"],
-    [1.00, "#0b6e3a"],
+    [0.00, "#f7f3d3"],
+    [0.20, "#dceb9a"],
+    [0.45, "#a3d36a"],
+    [0.70, "#3f9b48"],
+    [1.00, "#0f4d2a"],
 ]
-
-# Diverging palette for residuals (red ↔ neutral ↔ green)
-DIVERGING_SCALE = [
-    [0.00, "#c0392b"],
-    [0.25, "#e67e22"],
-    [0.50, "#f7f3d3"],
-    [0.75, "#5ee08a"],
-    [1.00, "#117a3d"],
-]
-
-# Categorical palette (regions, LISA, etc.)
-CAT_PALETTE = ["#5ee08a", "#f0b34a", "#60a5fa", "#b9a4ff", "#34d399", "#f87171"]
 
 
 def inject_css() -> None:
-    """Inject the dark forest-green theme with bigger typography."""
+    """Inject the dark forest-green theme into the Streamlit document."""
     st.markdown(f"""
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
       html, body, [class*="st-"], [class*="css-"] {{
         font-family: 'IBM Plex Sans', sans-serif !important;
@@ -85,30 +71,31 @@ def inject_css() -> None:
         background: {PALETTE['panel']} !important;
         border-right: 1px solid {PALETTE['border_2']};
       }}
-      section[data-testid="stSidebar"] * {{ color: {PALETTE['text']}; }}
+      section[data-testid="stSidebar"] * {{
+        color: {PALETTE['text']};
+      }}
 
-      /* Bigger, bolder headings */
-      h1 {{ font-size: 30px !important; font-weight: 700 !important; color: {PALETTE['text']} !important; }}
-      h2 {{ font-size: 22px !important; font-weight: 700 !important; color: {PALETTE['text']} !important; }}
-      h3 {{ font-size: 17px !important; font-weight: 600 !important; color: {PALETTE['text']} !important; }}
-      h4 {{ font-size: 14px !important; font-weight: 600 !important; color: {PALETTE['text']} !important; }}
+      /* Headings */
+      h1, h2, h3, h4 {{
+        color: {PALETTE['text']} !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.005em;
+      }}
 
+      /* Headers in main */
       [data-testid="stHeader"] {{ background: transparent !important; }}
 
-      /* Widget labels */
-      .stSelectbox label, .stSlider label, .stRadio label, .stMultiSelect label,
-      .stCheckbox label {{
-        font-size: 12px !important;
-        color: {PALETTE['text_dim']} !important;
+      /* Native widget look */
+      .stSelectbox label, .stSlider label, .stRadio label, .stMultiSelect label {{
+        font-size: 10px !important;
+        color: {PALETTE['text_dimmer']} !important;
         text-transform: uppercase;
         letter-spacing: 0.06em;
-        font-weight: 600 !important;
       }}
       div[data-baseweb="select"] > div {{
         background: {PALETTE['card']} !important;
         border: 1px solid {PALETTE['border']} !important;
         border-radius: 6px !important;
-        font-size: 14px !important;
       }}
       div[data-baseweb="select"] svg {{ color: {PALETTE['accent_hi']}; }}
       .stSlider [data-baseweb="slider"] div[role="slider"] {{
@@ -116,21 +103,18 @@ def inject_css() -> None:
         border-color: {PALETTE['accent']} !important;
       }}
 
-      /* Sidebar nav radio */
+      /* Buttons (radio nav) */
       .stRadio > div {{ flex-direction: column; gap: 4px; }}
       .stRadio label {{
         background: transparent;
         border-radius: 7px;
-        padding: 11px 12px !important;
+        padding: 9px 10px !important;
         border-left: 3px solid transparent;
         transition: all 0.12s ease;
-        font-size: 13px !important;
-        text-transform: none !important;
-        letter-spacing: 0 !important;
       }}
-      .stRadio label:hover {{ background: rgba(94, 224, 138, 0.10); }}
+      .stRadio label:hover {{ background: rgba(72, 159, 88, 0.07); }}
       .stRadio [data-checked="true"] {{
-        background: rgba(94, 224, 138, 0.16) !important;
+        background: rgba(74, 222, 128, 0.10) !important;
         border-left: 3px solid {PALETTE['accent']} !important;
       }}
 
@@ -140,204 +124,193 @@ def inject_css() -> None:
         border-radius: 10px;
         border: 1px solid {PALETTE['border']};
       }}
-      .stDataFrame [role="cell"] {{ font-size: 13px !important; }}
 
       /* Card container */
       .agro-card {{
         background: {PALETTE['panel_alt']};
         border: 1px solid {PALETTE['border']};
-        border-radius: 12px;
-        padding: 20px 22px;
-        margin-bottom: 18px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin-bottom: 14px;
       }}
       .agro-card-title {{
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        color: {PALETTE['accent_hi']};
-        margin-bottom: 14px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: {PALETTE['text_dim']};
+        margin-bottom: 12px;
         text-transform: uppercase;
       }}
 
-      /* Map card — lighter background to improve contrast with cartodbpositron */
-      .agro-card-map {{
-        background: {PALETTE['panel_alt']};
-        border: 1px solid {PALETTE['border']};
-        border-radius: 12px;
-        padding: 16px 16px 12px 16px;
-        margin-bottom: 18px;
-      }}
-
-      /* Metric — visibly bigger */
+      /* Metric */
       .agro-metric {{
         background: {PALETTE['card']};
         border: 1px solid {PALETTE['border']};
-        border-radius: 10px;
-        padding: 18px 22px;
+        border-radius: 8px;
+        padding: 12px 16px;
       }}
       .agro-metric-label {{
-        font-size: 13px;
-        color: {PALETTE['text_dim']};
-        margin-bottom: 6px;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
+        font-size: 11px;
+        color: {PALETTE['text_dimmer']};
+        margin-bottom: 4px;
       }}
       .agro-metric-value {{
-        font-size: 32px;
-        font-weight: 700;
+        font-size: 22px;
+        font-weight: 600;
         font-family: 'IBM Plex Mono', monospace;
-        line-height: 1.1;
       }}
       .agro-metric-unit {{
-        font-size: 14px;
-        margin-left: 6px;
+        font-size: 12px;
+        margin-left: 4px;
         color: {PALETTE['text_dimmer']};
         font-family: 'IBM Plex Mono', monospace;
-        font-weight: 500;
-      }}
-      .agro-metric-sub {{
-        font-size: 12px;
-        color: {PALETTE['text_dimmer']};
-        margin-top: 6px;
-        font-weight: 500;
       }}
 
       /* Tags */
       .agro-tag {{
-        background: rgba(94,224,138,0.18);
+        background: rgba(74, 222, 128, 0.14);
         color: {PALETTE['accent_hi']};
-        border: 1px solid rgba(94,224,138,0.35);
+        border: 1px solid rgba(74, 222, 128, 0.30);
         border-radius: 4px;
-        padding: 2px 10px;
-        font-size: 12px;
+        padding: 1px 8px;
+        font-size: 11px;
         font-family: 'IBM Plex Mono', monospace;
         margin-right: 6px;
-        font-weight: 600;
       }}
       .agro-tag.amber {{
-        background: rgba(240,179,74,0.18);
+        background: rgba(245,158,11,0.14);
         color: {PALETTE['amber']};
-        border: 1px solid rgba(240,179,74,0.35);
+        border: 1px solid rgba(245,158,11,0.30);
       }}
 
       /* Alert */
       .agro-alert {{
         background: {PALETTE['panel_alt']};
-        border: 1px solid rgba(94,224,138,0.32);
-        border-left: 4px solid {PALETTE['accent']};
+        border: 1px solid rgba(74,222,128,0.27);
         border-radius: 10px;
-        padding: 14px 18px;
+        padding: 12px 16px;
         margin: 14px 0;
-        color: {PALETTE['text']};
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        color: {PALETTE['text_dim']};
         line-height: 1.7;
-        font-size: 14px;
+        font-size: 12.5px;
       }}
-      .agro-alert.bad {{
-        border-color: rgba(248,113,113,0.45);
-        border-left-color: {PALETTE['bad']};
+      .agro-alert.bad {{ border-color: rgba(248,113,113,0.40); }}
+      .agro-alert.amber {{ border-color: rgba(245,158,11,0.40); }}
+      .agro-alert::before {{
+        content: '';
+        flex: 0 0 4px;
+        background: {PALETTE['accent']};
+        border-radius: 3px;
+        align-self: stretch;
       }}
-      .agro-alert.amber {{
-        border-color: rgba(240,179,74,0.45);
-        border-left-color: {PALETTE['amber']};
-      }}
-      .agro-alert ul {{ margin: 8px 0 0 18px; padding: 0; }}
-      .agro-alert li {{ margin-bottom: 4px; }}
+      .agro-alert.bad::before {{ background: {PALETTE['bad']}; }}
+      .agro-alert.amber::before {{ background: {PALETTE['amber']}; }}
 
       /* Top bar */
       .agro-topbar {{
         background: {PALETTE['panel']};
         border-bottom: 1px solid {PALETTE['border_2']};
-        padding: 14px 24px;
+        padding: 10px 22px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin: -1.2rem -1.2rem 1.4rem -1.2rem;
+        margin: -1.2rem -1.2rem 1.2rem -1.2rem;
       }}
-      .agro-topbar .left {{ display:flex; align-items:center; gap:12px; }}
+      .agro-topbar .left {{ display:flex; align-items:center; gap:10px; }}
       .agro-topbar .pageLabel {{
-        font-size: 16px; font-weight:700; color:{PALETTE['text']};
+        font-size: 13px; font-weight:600; color:{PALETTE['text']};
       }}
-      .agro-topbar .sep {{ font-size:13px; color:{PALETTE['text_dimmer']}; }}
+      .agro-topbar .sep {{ font-size:12px; color:{PALETTE['text_dimmer']}; }}
       .agro-topbar .right {{
         font-family: 'IBM Plex Mono', monospace;
-        font-size: 12px; color: {PALETTE['text_dim']};
+        font-size: 11px; color: {PALETTE['text_dimmer']};
       }}
       .agro-status-dot {{
-        width:8px; height:8px; border-radius:50%;
-        background:#5ee08a; box-shadow: 0 0 8px #5ee08a88;
+        width:7px; height:7px; border-radius:50%;
+        background:#4ade80; box-shadow: 0 0 6px #4ade8088;
         display:inline-block; margin-left:8px;
       }}
 
-      /* Hide Streamlit chrome */
+      /* Hide Streamlit chrome (but KEEP the sidebar expand control) */
       #MainMenu, footer {{ visibility: hidden; }}
       header[data-testid="stHeader"] {{
         background: transparent !important;
         height: auto !important;
       }}
       header[data-testid="stHeader"] > * {{ visibility: hidden; }}
-      [data-testid="stSidebarCollapsedControl"],
-      [data-testid="stSidebarCollapseButton"] {{
-        display: none !important;
+      header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
+      header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"] * {{
+        visibility: visible !important;
+      }}
+
+      /* Make the "expand sidebar" control prominent so it's never hidden */
+      [data-testid="stSidebarCollapsedControl"] {{
+        position: fixed !important;
+        top: 12px;
+        left: 12px;
+        z-index: 9999;
+        background: {PALETTE['accent']} !important;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.45);
+        padding: 4px 6px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }}
+      [data-testid="stSidebarCollapsedControl"]::after {{
+        content: "Mostrar menú";
+        color: #fff;
+        font-family: 'IBM Plex Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        margin-right: 4px;
+      }}
+      [data-testid="stSidebarCollapsedControl"] button,
+      [data-testid="stSidebarCollapsedControl"] svg {{
+        color: #fff !important;
+        fill: #fff !important;
       }}
 
       .block-container {{
-        padding-top: 1.4rem !important;
-        padding-bottom: 1.4rem !important;
+        padding-top: 1.2rem !important;
+        padding-bottom: 1.2rem !important;
         max-width: 100% !important;
       }}
 
       /* Folium iframe */
       iframe.folium-map {{
-        border-radius: 10px;
+        border-radius: 8px;
         border: 1px solid {PALETTE['border']};
       }}
 
+      /* Streamlit metric override (if used) */
       [data-testid="stMetric"] {{
         background: {PALETTE['card']};
         border: 1px solid {PALETTE['border']};
-        border-radius: 10px;
-        padding: 14px 18px;
-      }}
-
-      /* Streamlit native paragraph and list */
-      p, li, span {{ font-size: 14px; }}
-
-      /* Buttons */
-      .stButton > button {{
-        background: {PALETTE['card']} !important;
-        color: {PALETTE['text']} !important;
-        border: 1px solid {PALETTE['border']} !important;
-        border-radius: 8px !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        padding: 9px 14px !important;
-      }}
-      .stButton > button:hover {{
-        background: {PALETTE['accent']} !important;
-        color: #0a1410 !important;
-        border-color: {PALETTE['accent']} !important;
+        border-radius: 8px;
+        padding: 12px 16px;
       }}
 
       /* Scrollbar */
-      ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
+      ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
       ::-webkit-scrollbar-track {{ background: {PALETTE['panel']}; }}
-      ::-webkit-scrollbar-thumb {{ background: rgba(180,210,190,0.25); border-radius: 4px; }}
+      ::-webkit-scrollbar-thumb {{ background: rgba(180,210,190,0.18); border-radius: 3px; }}
+
     </style>
     """, unsafe_allow_html=True)
 
 
-def metric(label: str, value: str, unit: str = "", color: str | None = None,
-           sub: str | None = None) -> str:
-    """Render a big metric tile."""
-    color = color or PALETTE["accent_hi"]
-    sub_html = (f'<div class="agro-metric-sub">{sub}</div>' if sub else "")
+def metric(label: str, value: str, unit: str = "", color: str | None = None) -> str:
+    """Render a metric tile. Returns HTML string for st.markdown."""
+    color = color or PALETTE["accent"]
     return f"""
     <div class="agro-metric">
       <div class="agro-metric-label">{label}</div>
       <div class="agro-metric-value" style="color:{color}">{value}<span class="agro-metric-unit">{unit}</span></div>
-      {sub_html}
     </div>
     """
 
@@ -358,12 +331,12 @@ def topbar(page_label: str, year: int, region: str) -> None:
       <div class="left">
         <span class="pageLabel">{page_label}</span>
         <span class="sep">·</span>
-        <span style="font-size:13px;color:#94a39a">Maíz</span>
+        <span style="font-size:11px;color:#7a8c81">Maíz</span>
         <span class="agro-tag">{year}</span>
         {region_tag}
       </div>
       <div class="right">
-        Estadística Espacial + Modelo Lineal · Maíz Inteligente
+        Estadística Espacial + ML · Proyecto 04
         <span class="agro-status-dot"></span>
       </div>
     </div>
