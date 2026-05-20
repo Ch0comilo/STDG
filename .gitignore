@@ -1,1 +1,6 @@
 data/
+data.zip
+generar_articulo.py
+image.png
+__pycache__/
+*.pyc
